@@ -1,0 +1,1062 @@
+# seed: 1234
+# debug: True
+# saving:
+#   head_dir: '.'
+#   checkpoint_dir: 'model_checkpoints'
+#   tb_log_dir: 'tensorboard_logs'
+#   tb_log_prefix: "sequence_emb2cells_pbmc_data_hyenadna" #"sequence_emb2cells_pbmc_data
+# task:
+#   input:
+#     # valid values:
+#     # 'embeddings' - to train on pre-computed enformer embeddings
+#     # 'sequence' - will load and run from TSS enformer windows and process
+#     #      sequence to embeddings using the trunk of the enformer model
+#     input_type: 'embeddings'
+#     # 3072 for embeddings
+#     emb_dim: 256
+#     subset_genes_column: None
+#   target:
+#     # True / False if target was already log transformed
+#     log_target_in: True
+#     # (log(x+1) transform data for training (or train on log data if already
+#     # supplied as log transformed
+#     log_transform_train: True
+#     # validate against log(x+1) transformed data
+#     log_transform_validate: True
+#     # standardise observed and predicted values across TSS at validation
+#     std_validate: True
+#     use_enf_data_split: True
+# resource:
+#     device: "cuda"
+#     # everything above 0 will invoke ddp training
+#     num_devices: 0
+#     num_workers: 1
+#     backed_mode: False
+#     # evaluate fully on training data after each epoch
+#     run_train_eval: False
+# optimization:
+#   run_train: True
+#   loss: 'pearson'
+#   # only relevant when using pearson loss
+#   rel_weights_gene: 1.0
+#   rel_weights_cell: 1.0
+#   # Supported loss functions:
+#   # 'mse' 'poisson' 'poissonnll' 'pearson'
+#   pears_norm_mode: 'mean'
+#   # maximum number of epochs to run
+#   epochs: 10
+#   dropout_prob: 0.5
+#   optimizer:
+#     # supported optimizers 'AdamW', 'SGD', 'RMSprop'
+#     optimizer: 'AdamW'
+#     lr: 0.0001
+#     # supported schedules:
+#     # 'constant' 'linear_warm_up_cosine_decay'
+#     # 'linear_warm_up' 'reduce_on_plateau'
+#     lr_schedule: 'reduce_on_plateau'
+#     weight_decay: 0.1
+#   scheduler:
+#     warmup_epochs: 1
+#   swa:
+#     use_swa: False
+#     swa_lr: 0.00001
+#     swa_epoch_start: 5
+#     swa_anneal_epochs: 1
+#     swa_anneal_strategy: 'linear'
+# model:
+#   # when predicting from pre-compute embeddings select:
+#   # 'linear' - for a simple linear layer model
+#   # 'bottleneck' for a two layer MLP with (nonlinear) bottleneck
+#   # if using the Enformer trunk to train from DNA sequence select:
+#   # 'provided' - for a simple linear layer model
+#   # 'provided_bottleneck' for a two layer MLP with (nonlinear) bottleneck
+#   model_type: 'bottleneck'
+#   # apply softplus after linear layer
+#   softplus: True
+#   load_trained_model: False
+#   model_path: "."
+#   bottleneck_dim: 2000
+#   # only RELU implemented select 'RELU' or None
+#   bottleneck_nonlin: 'RELU'
+# enformer:
+#   enformer_trunk:
+#     # specify if to use enformer trunk using the pretrained model to compute
+#     # embeddings from sequence. needs 'task.input_type = 'sequence'
+#     use_enformer_trunk: False
+#     # can be the path to a cached checkpoint or provide
+#     # "EleutherAI--enformer-official-rough" to download it on the fly (~ 1GB)
+#     enformer_copy_path: "."
+#     # for TSS prediction a single prediction bin per Enformer window is
+#     # extracted. Default this is bin 447. Change if modified.
+#     central_bin: 447
+#     # specify if to freeze the enfomer trunk set to --> 'trunk' otherwise
+#     # will finetune the whole model trunk + head
+#     freeze: 'trunk'
+# data:
+#   loader:
+#     batch_size: 10
+#     shuffle: True
+#   dataset:
+#     ann_data_file: "./pbmc_preprocessed_matched_with_precomp_embeddings_heynadna.h5ad"
+#     # Name of the layer of the anndata object to use as observed counts.
+#     # Will use anndata.X if None supplied
+#     use_layer: None
+#     split_name: 'enf_set'
+#     # only needed if running on DNA sequence input
+#     reference_genome: "../hg38.fa"
+# test:
+#   run_test: False
+#   test_on: 'all'
+
+
+
+# seed: 1234
+# debug: True
+# saving:
+#   head_dir: '.'
+#   checkpoint_dir: 'model_checkpoints'
+#   tb_log_dir: 'tensorboard_logs'
+#   tb_log_prefix: "sequence_emb2cells_pbmc_data"
+# task:
+#   input:
+#     # valid values:
+#     # 'embeddings' - to train on pre-computed enformer embeddings
+#     # 'sequence' - will load and run from TSS enformer windows and process
+#     #      sequence to embeddings using the trunk of the enformer model
+#     input_type: 'embeddings'
+#     # 3072 for embeddings
+#     emb_dim: 3072
+#     subset_genes_column: None
+#   target:
+#     # True / False if target was already log transformed
+#     log_target_in: True
+#     # (log(x+1) transform data for training (or train on log data if already
+#     # supplied as log transformed
+#     log_transform_train: True
+#     # validate against log(x+1) transformed data
+#     log_transform_validate: True
+#     # standardise observed and predicted values across TSS at validation
+#     std_validate: False
+#     use_enf_data_split: True
+# resource:
+#     device: "cuda"
+#     # everything above 0 will invoke ddp training
+#     num_devices: 0
+#     num_workers: 1
+#     backed_mode: False
+#     # evaluate fully on training data after each epoch
+#     run_train_eval: False
+# optimization:
+#   run_train: True
+#   loss: 'pearson'
+#   # only relevant when using pearson loss
+#   rel_weights_gene: 1.0
+#   rel_weights_cell: 1.0
+#   pears_norm_mode: 'mean'
+#   epochs: 30
+#   dropout_prob: 0.5
+#   optimizer:
+#     optimizer: 'AdamW'
+#     lr: 0.0001
+#     # valid: 'constant' or 'linear_warm_up_cosine_decay'
+#     # or 'linear_warm_up' or 'reduce_on_plateau'
+#     lr_schedule: 'reduce_on_plateau'
+#     weight_decay: 0.1
+#   scheduler:
+#     warmup_epochs: 1
+#   swa:
+#     use_swa: False
+#     swa_lr: 0.00001
+#     swa_epoch_start: 5
+#     swa_anneal_epochs: 1
+#     swa_anneal_strategy: 'linear'
+# model:
+#   # select 'linear;, 'provided' - for linear using a trunk
+#   # or 'bottleneck' for a linear model with (nonlinear) bottleneck
+#   # or 'provided_bottleneck' for a bottleneck model with trunk
+#   model_type: 'bottleneck'
+#   # apply softplus after linear layer
+#   softplus: True
+#   load_trained_model: False
+#   model_path: "."
+#   bottleneck_dim: 2000
+#   bottleneck_nonlin: 'RELU'
+# enformer:
+#   enformer_trunk:
+#     # specify if to use enformer trunk using the pretrained model to compute
+#     # embeddings from sequence. needs 'task.input_type = 'sequence'
+#     use_enformer_trunk: False
+#     # can be the path to a cached checkpoint or provide
+#     # "EleutherAI--enformer-official-rough" download it on the fly (~ 1GB)
+#     enformer_copy_path: ".cache/huggingface/hub/models--EleutherAI--enformer-official-rough\
+#     /snapshots/affe5713ae9017460706a44108289b13c5fee16c"
+#     # for TSS/ROI prediction a single prediction bin per Enformer window was
+#     # extracted. Default this is bin 447. Change if modißfied.
+#     central_bin: 447
+#     # specify if to freeze the enfomer trunk set to --> 'trunk' otherwise
+#     # will finetune the whole model trunk + head
+#     freeze: 'trunk'
+# data:
+#   loader:
+#     batch_size: 50
+#     shuffle: True
+#   dataset:
+#     ann_data_file: "/gpfs/gibbs/pi/zhao/tl688/seq2cell_data/pbmc_data/pbmc_preprocessed_matched_with_precomp_embeddings.h5ad"
+#     reference_genome: "../hg38.fa"
+#     use_layer: None
+#     split_name: 'enf_set'
+#   sequence:
+#     seq_context_length: 196608
+#     # if query files are in 0 or 1 based format
+#     pos_base: 1
+# test:
+#   run_test: False
+#   test_on: 'test'
+
+# seed: 1234
+# debug: True
+# saving:
+#   head_dir: '.'
+#   checkpoint_dir: 'model_checkpoints_thymus_atlas_hsc'
+#   tb_log_dir: 'tensorboard_logs_thymus_atlas_hsc'
+#   tb_log_prefix: "sequence_emb2cells_thymus_atlas_hsc_data_hyena"
+# task:
+#   input:
+#     # valid values:
+#     # 'embeddings' - to train on pre-computed enformer embeddings
+#     # 'sequence' - will load and run from TSS enformer windows and process
+#     #      sequence to embeddings using the trunk of the enformer model
+#     input_type: 'embeddings'
+#     # 3072 for embeddings
+#     emb_dim: 256
+#     subset_genes_column: None
+#   target:
+#     # True / False if target was already log transformed
+#     log_target_in: True
+#     # (log(x+1) transform data for training (or train on log data if already
+#     # supplied as log transformed
+#     log_transform_train: True
+#     # validate against log(x+1) transformed data
+#     log_transform_validate: True
+#     # standardise observed and predicted values across TSS at validation
+#     std_validate: False
+#     use_enf_data_split: True
+# resource:
+#     device: "cuda"
+#     # everything above 0 will invoke ddp training
+#     num_devices: 0
+#     num_workers: 1
+#     backed_mode: False
+#     # evaluate fully on training data after each epoch
+#     run_train_eval: False
+# optimization:
+#   run_train: True
+#   loss: 'pearson'
+#   # only relevant when using pearson loss
+#   rel_weights_gene: 1.0
+#   rel_weights_cell: 1.0
+#   pears_norm_mode: 'mean'
+#   epochs: 30
+#   dropout_prob: 0.5
+#   optimizer:
+#     optimizer: 'AdamW'
+#     lr: 0.0001
+#     # valid: 'constant' or 'linear_warm_up_cosine_decay'
+#     # or 'linear_warm_up' or 'reduce_on_plateau'
+#     lr_schedule: 'reduce_on_plateau'
+#     weight_decay: 0.1
+#   scheduler:
+#     warmup_epochs: 1
+#   swa:
+#     use_swa: False
+#     swa_lr: 0.00001
+#     swa_epoch_start: 5
+#     swa_anneal_epochs: 1
+#     swa_anneal_strategy: 'linear'
+# model:
+#   # select 'linear;, 'provided' - for linear using a trunk
+#   # or 'bottleneck' for a linear model with (nonlinear) bottleneck
+#   # or 'provided_bottleneck' for a bottleneck model with trunk
+#   model_type: 'bottleneck'
+#   # apply softplus after linear layer
+#   softplus: True
+#   load_trained_model: False
+#   model_path: "."
+#   bottleneck_dim: 2000
+#   bottleneck_nonlin: 'RELU'
+# enformer:
+#   enformer_trunk:
+#     # specify if to use enformer trunk using the pretrained model to compute
+#     # embeddings from sequence. needs 'task.input_type = 'sequence'
+#     use_enformer_trunk: False
+#     # can be the path to a cached checkpoint or provide
+#     # "EleutherAI--enformer-official-rough" download it on the fly (~ 1GB)
+#     enformer_copy_path: ".cache/huggingface/hub/models--EleutherAI--enformer-official-rough\
+#     /snapshots/affe5713ae9017460706a44108289b13c5fee16c"
+#     # for TSS/ROI prediction a single prediction bin per Enformer window was
+#     # extracted. Default this is bin 447. Change if modißfied.
+#     central_bin: 447
+#     # specify if to freeze the enfomer trunk set to --> 'trunk' otherwise
+#     # will finetune the whole model trunk + head
+#     freeze: 'trunk'
+# data:
+#   loader:
+#     batch_size: 50
+#     shuffle: True
+#   dataset:
+#     ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymic_hsc_preprocessed_matched_with_precomp_embeddings_heynadna.h5ad"
+#     reference_genome: "../hg38.fa"
+#     use_layer: None
+#     split_name: 'enf_set'
+#   sequence:
+#     seq_context_length: 196608
+#     # if query files are in 0 or 1 based format
+#     pos_base: 1
+# test:
+#   run_test: False
+#   test_on: 'test'
+
+
+# seed: 1234
+# debug: True
+# saving:
+#   head_dir: '.'
+#   checkpoint_dir: 'model_checkpoints_thymus_atlas_all'
+#   tb_log_dir: 'tensorboard_logs_thymus_atlas_all'
+#   tb_log_prefix: "sequence_emb2cells_thymus_atlas_all_data"
+# task:
+#   input:
+#     # valid values:
+#     # 'embeddings' - to train on pre-computed enformer embeddings
+#     # 'sequence' - will load and run from TSS enformer windows and process
+#     #      sequence to embeddings using the trunk of the enformer model
+#     input_type: 'embeddings'
+#     # 3072 for embeddings
+#     emb_dim: 3072
+#     subset_genes_column: None
+#   target:
+#     # True / False if target was already log transformed
+#     log_target_in: True
+#     # (log(x+1) transform data for training (or train on log data if already
+#     # supplied as log transformed
+#     log_transform_train: True
+#     # validate against log(x+1) transformed data
+#     log_transform_validate: True
+#     # standardise observed and predicted values across TSS at validation
+#     std_validate: False
+#     use_enf_data_split: True
+# resource:
+#     device: "cuda"
+#     # everything above 0 will invoke ddp training
+#     num_devices: 0
+#     num_workers: 1
+#     backed_mode: False
+#     # evaluate fully on training data after each epoch
+#     run_train_eval: False
+# optimization:
+#   run_train: True
+#   loss: 'pearson'
+#   # only relevant when using pearson loss
+#   rel_weights_gene: 1.0
+#   rel_weights_cell: 1.0
+#   pears_norm_mode: 'mean'
+#   epochs: 30
+#   dropout_prob: 0.5
+#   optimizer:
+#     optimizer: 'AdamW'
+#     lr: 0.0001
+#     # valid: 'constant' or 'linear_warm_up_cosine_decay'
+#     # or 'linear_warm_up' or 'reduce_on_plateau'
+#     lr_schedule: 'reduce_on_plateau'
+#     weight_decay: 0.1
+#   scheduler:
+#     warmup_epochs: 1
+#   swa:
+#     use_swa: False
+#     swa_lr: 0.00001
+#     swa_epoch_start: 5
+#     swa_anneal_epochs: 1
+#     swa_anneal_strategy: 'linear'
+# model:
+#   # select 'linear;, 'provided' - for linear using a trunk
+#   # or 'bottleneck' for a linear model with (nonlinear) bottleneck
+#   # or 'provided_bottleneck' for a bottleneck model with trunk
+#   model_type: 'bottleneck'
+#   # apply softplus after linear layer
+#   softplus: True
+#   load_trained_model: False
+#   model_path: "."
+#   bottleneck_dim: 2000
+#   bottleneck_nonlin: 'RELU'
+# enformer:
+#   enformer_trunk:
+#     # specify if to use enformer trunk using the pretrained model to compute
+#     # embeddings from sequence. needs 'task.input_type = 'sequence'
+#     use_enformer_trunk: False
+#     # can be the path to a cached checkpoint or provide
+#     # "EleutherAI--enformer-official-rough" download it on the fly (~ 1GB)
+#     enformer_copy_path: ".cache/huggingface/hub/models--EleutherAI--enformer-official-rough\
+#     /snapshots/affe5713ae9017460706a44108289b13c5fee16c"
+#     # for TSS/ROI prediction a single prediction bin per Enformer window was
+#     # extracted. Default this is bin 447. Change if modißfied.
+#     central_bin: 447
+#     # specify if to freeze the enfomer trunk set to --> 'trunk' otherwise
+#     # will finetune the whole model trunk + head
+#     freeze: 'trunk'
+# data:
+#   loader:
+#     batch_size: 50
+#     shuffle: True
+#   dataset:
+#     ann_data_file: "/gpfs/gibbs/pi/zhao/tl688/seq2cell_data/thymic_all/thymus_atlas_all_matched_with_precomp_embeddings.h5ad"
+#     reference_genome: "../hg38.fa"
+#     use_layer: None
+#     split_name: 'enf_set'
+#   sequence:
+#     seq_context_length: 196608
+#     # if query files are in 0 or 1 based format
+#     pos_base: 1
+# test:
+#   run_test: False
+#   test_on: 'test'
+
+## train thymus
+seed: 1234
+debug: True
+saving:
+  head_dir: '.'
+  checkpoint_dir: 'model_checkpoints_thymus_atlas_Adabelief_mixture_2layer' #'model_checkpoints_thymus_atlas_Adabelief_largepearson' #'model_checkpoints_thymus_atlas_ct_HSC_Adabelief_mixture1024'
+  tb_log_dir: 'tensorboard_logs_thymus_atlas_hsc_2layer'
+  tb_log_prefix: "sequence_emb2cells_thymus_atlas_Adabelief_mixture_2layer" #"sequence_emb2cells_thymus_atlas_Adabelief_largepearson" #"sequence_emb2cells_thymus_atlas_ct_HSC_Adabelief_mixture1024"
+task:
+  input:
+    # valid values:
+    # 'embeddings' - to train on pre-computed enformer embeddings
+    # 'sequence' - will load and run from TSS enformer windows and process
+    #      sequence to embeddings using the trunk of the enformer model
+    input_type: 'embeddings'
+    # 3072 for embeddings, 4608 for mixture
+    emb_dim: 3072
+    subset_genes_column: None
+  target:
+    # True / False if target was already log transformed
+    log_target_in: True
+    # (log(x+1) transform data for training (or train on log data if already
+    # supplied as log transformed
+    log_transform_train: True
+    # validate against log(x+1) transformed data
+    log_transform_validate: True
+    # standardise observed and predicted values across TSS at validation
+    std_validate: False
+    use_enf_data_split: True
+resource:
+    device: "cuda"
+    # everything above 0 will invoke ddp training
+    num_devices: 0
+    num_workers: 1
+    backed_mode: False
+    # evaluate fully on training data after each epoch
+    run_train_eval: False
+optimization:
+  run_train: True
+  loss: 'mixture' #'pearson' #'mixture'
+  # only relevant when using pearson loss
+  rel_weights_gene: 1.0
+  rel_weights_cell: 1.0
+  pears_norm_mode: 'mean'
+  epochs: 30
+  dropout_prob: 0.5
+  optimizer:
+    optimizer: 'Adabelief'
+    lr: 0.0001
+    # valid: 'constant' or 'linear_warm_up_cosine_decay'
+    # or 'linear_warm_up' or 'reduce_on_plateau'
+    lr_schedule: 'reduce_on_plateau'
+    weight_decay: 0.1
+  scheduler:
+    warmup_epochs: 1
+  swa:
+    use_swa: False
+    swa_lr: 0.00001
+    swa_epoch_start: 5
+    swa_anneal_epochs: 1
+    swa_anneal_strategy: 'linear'
+model:
+  # select 'linear;, 'provided' - for linear using a trunk
+  # or 'bottleneck' for a linear model with (nonlinear) bottleneck
+  # or 'provided_bottleneck' for a bottleneck model with trunk
+  model_type: 'bottleneck'
+  # apply softplus after linear layer
+  softplus: True
+  load_trained_model: False
+  model_path: "."
+  bottleneck_dim: 2000
+  bottleneck_nonlin: 'RELU'
+enformer:
+  enformer_trunk:
+    # specify if to use enformer trunk using the pretrained model to compute
+    # embeddings from sequence. needs 'task.input_type = 'sequence'
+    use_enformer_trunk: False
+    # can be the path to a cached checkpoint or provide
+    # "EleutherAI--enformer-official-rough" download it on the fly (~ 1GB)
+    enformer_copy_path: ".cache/huggingface/hub/models--EleutherAI--enformer-official-rough\
+    /snapshots/affe5713ae9017460706a44108289b13c5fee16c"
+    # for TSS/ROI prediction a single prediction bin per Enformer window was
+    # extracted. Default this is bin 447. Change if modißfied.
+    central_bin: 447
+    # specify if to freeze the enfomer trunk set to --> 'trunk' otherwise
+    # will finetune the whole model trunk + head
+    freeze: 'trunk'
+data:
+  loader:
+    batch_size: 50
+    shuffle: True
+  dataset: 
+    ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_combembeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb_standardscale.h5ad"#"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad"
+    #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_combembeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb_combemb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" # "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" 
+    reference_genome: "../hg38.fa"
+    use_layer: None
+    split_name: 'enf_set'
+  sequence:
+    seq_context_length: 196608
+    # if query files are in 0 or 1 based format
+    pos_base: 1
+test:
+  run_test: False
+  test_on: 'test'
+
+
+# seed: 1234
+# debug: True
+# saving:
+#   head_dir: '.'
+#   checkpoint_dir: 'model_checkpoints_thymus_atlas_Adabelief_scale' #'model_checkpoints_thymus_atlas_Adabelief_largepearson' #'model_checkpoints_thymus_atlas_ct_HSC_Adabelief_mixture1024'
+#   tb_log_dir: 'tensorboard_logs_thymus_atlas_hsc_pca'
+#   tb_log_prefix: "sequence_emb2cells_thymus_atlas_Adabelief_scale" #"sequence_emb2cells_thymus_atlas_Adabelief_largepearson" #"sequence_emb2cells_thymus_atlas_ct_HSC_Adabelief_mixture1024"
+# task:
+#   input:
+#     # valid values:
+#     # 'embeddings' - to train on pre-computed enformer embeddings
+#     # 'sequence' - will load and run from TSS enformer windows and process
+#     #      sequence to embeddings using the trunk of the enformer model
+#     input_type: 'embeddings'
+#     # 3072 for embeddings, 4608 for mixture
+#     emb_dim: 3072
+#     subset_genes_column: None
+#   target:
+#     # True / False if target was already log transformed
+#     log_target_in: True
+#     # (log(x+1) transform data for training (or train on log data if already
+#     # supplied as log transformed
+#     log_transform_train: True
+#     # validate against log(x+1) transformed data
+#     log_transform_validate: True
+#     # standardise observed and predicted values across TSS at validation
+#     std_validate: False
+#     use_enf_data_split: True
+# resource:
+#     device: "cuda"
+#     # everything above 0 will invoke ddp training
+#     num_devices: 0
+#     num_workers: 1
+#     backed_mode: False
+#     # evaluate fully on training data after each epoch
+#     run_train_eval: False
+# optimization:
+#   run_train: True
+#   loss: 'pearson' #'mixture'
+#   # only relevant when using pearson loss
+#   rel_weights_gene: 1.0
+#   rel_weights_cell: 1.0
+#   pears_norm_mode: 'mean'
+#   epochs: 30
+#   dropout_prob: 0.5
+#   optimizer:
+#     optimizer: 'Adabelief'
+#     lr: 0.0001
+#     # valid: 'constant' or 'linear_warm_up_cosine_decay'
+#     # or 'linear_warm_up' or 'reduce_on_plateau'
+#     lr_schedule: 'reduce_on_plateau'
+#     weight_decay: 0.1
+#   scheduler:
+#     warmup_epochs: 1
+#   swa:
+#     use_swa: False
+#     swa_lr: 0.00001
+#     swa_epoch_start: 5
+#     swa_anneal_epochs: 1
+#     swa_anneal_strategy: 'linear'
+# model:
+#   # select 'linear;, 'provided' - for linear using a trunk
+#   # or 'bottleneck' for a linear model with (nonlinear) bottleneck
+#   # or 'provided_bottleneck' for a bottleneck model with trunk
+#   model_type: 'bottleneck'
+#   # apply softplus after linear layer
+#   softplus: False
+#   load_trained_model: False
+#   model_path: "."
+#   bottleneck_dim: 2000
+#   bottleneck_nonlin: 'RELU'
+# enformer:
+#   enformer_trunk:
+#     # specify if to use enformer trunk using the pretrained model to compute
+#     # embeddings from sequence. needs 'task.input_type = 'sequence'
+#     use_enformer_trunk: False
+#     # can be the path to a cached checkpoint or provide
+#     # "EleutherAI--enformer-official-rough" download it on the fly (~ 1GB)
+#     enformer_copy_path: ".cache/huggingface/hub/models--EleutherAI--enformer-official-rough\
+#     /snapshots/affe5713ae9017460706a44108289b13c5fee16c"
+#     # for TSS/ROI prediction a single prediction bin per Enformer window was
+#     # extracted. Default this is bin 447. Change if modißfied.
+#     central_bin: 447
+#     # specify if to freeze the enfomer trunk set to --> 'trunk' otherwise
+#     # will finetune the whole model trunk + head
+#     freeze: 'trunk'
+# data:
+#   loader:
+#     batch_size: 1024
+#     shuffle: True
+#   dataset: 
+#     ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb_predictscale.h5ad"
+#     reference_genome: "../hg38.fa"
+#     use_layer: None
+#     split_name: 'enf_set'
+#   sequence:
+#     seq_context_length: 196608
+#     # if query files are in 0 or 1 based format
+#     pos_base: 1
+# test:
+#   run_test: False
+#   test_on: 'test'
+
+
+
+# seed: 1234
+# debug: True
+# saving:
+#   head_dir: '.'
+#   checkpoint_dir: 'model_checkpoints_pbmc_data_celltype'
+#   tb_log_dir: 'tensorboard_logs'
+#   tb_log_prefix: "sequence_emb2cells_pbmc_data_celltype_CD8_T_2" #"sequence_emb2cells_pbmc_data
+# task:
+#   input:
+#     # valid values:
+#     # 'embeddings' - to train on pre-computed enformer embeddings
+#     # 'sequence' - will load and run from TSS enformer windows and process
+#     #      sequence to embeddings using the trunk of the enformer model
+#     input_type: 'embeddings'
+#     # 3072 for embeddings
+#     emb_dim: 3072
+#     subset_genes_column: None
+#   target:
+#     # True / False if target was already log transformed
+#     log_target_in: True
+#     # (log(x+1) transform data for training (or train on log data if already
+#     # supplied as log transformed
+#     log_transform_train: True
+#     # validate against log(x+1) transformed data
+#     log_transform_validate: True
+#     # standardise observed and predicted values across TSS at validation
+#     std_validate: True
+#     use_enf_data_split: True
+# resource:
+#     device: "cuda"
+#     # everything above 0 will invoke ddp training
+#     num_devices: 0
+#     num_workers: 1
+#     backed_mode: False
+#     # evaluate fully on training data after each epoch
+#     run_train_eval: False
+# optimization:
+#   run_train: True
+#   loss: 'pearson'
+#   # only relevant when using pearson loss
+#   rel_weights_gene: 1.0
+#   rel_weights_cell: 1.0
+#   # Supported loss functions:
+#   # 'mse' 'poisson' 'poissonnll' 'pearson'
+#   pears_norm_mode: 'mean'
+#   # maximum number of epochs to run
+#   epochs: 30
+#   dropout_prob: 0.5
+#   optimizer:
+#     # supported optimizers 'AdamW', 'SGD', 'RMSprop'
+#     optimizer: 'AdamW'
+#     lr: 0.0001
+#     # supported schedules:
+#     # 'constant' 'linear_warm_up_cosine_decay'
+#     # 'linear_warm_up' 'reduce_on_plateau'
+#     lr_schedule: 'reduce_on_plateau'
+#     weight_decay: 0.1
+#   scheduler:
+#     warmup_epochs: 1
+#   swa:
+#     use_swa: False
+#     swa_lr: 0.00001
+#     swa_epoch_start: 5
+#     swa_anneal_epochs: 1
+#     swa_anneal_strategy: 'linear'
+# model:
+#   # when predicting from pre-compute embeddings select:
+#   # 'linear' - for a simple linear layer model
+#   # 'bottleneck' for a two layer MLP with (nonlinear) bottleneck
+#   # if using the Enformer trunk to train from DNA sequence select:
+#   # 'provided' - for a simple linear layer model
+#   # 'provided_bottleneck' for a two layer MLP with (nonlinear) bottleneck
+#   model_type: 'bottleneck'
+#   # apply softplus after linear layer
+#   softplus: True
+#   load_trained_model: False
+#   model_path: "."
+#   bottleneck_dim: 2000
+#   # only RELU implemented select 'RELU' or None
+#   bottleneck_nonlin: 'RELU'
+# enformer:
+#   enformer_trunk:
+#     # specify if to use enformer trunk using the pretrained model to compute
+#     # embeddings from sequence. needs 'task.input_type = 'sequence'
+#     use_enformer_trunk: False
+#     # can be the path to a cached checkpoint or provide
+#     # "EleutherAI--enformer-official-rough" to download it on the fly (~ 1GB)
+#     enformer_copy_path: "."
+#     # for TSS prediction a single prediction bin per Enformer window is
+#     # extracted. Default this is bin 447. Change if modified.
+#     central_bin: 447
+#     # specify if to freeze the enfomer trunk set to --> 'trunk' otherwise
+#     # will finetune the whole model trunk + head
+#     freeze: 'trunk'
+# data:
+#   loader:
+#     batch_size: 10
+#     shuffle: True
+#   dataset:
+#     ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/pbmc_data/ct_data/CD8_T_2_pbmc_preprocessed_matched.h5ad"
+#     # Name of the layer of the anndata object to use as observed counts.
+#     # Will use anndata.X if None supplied
+#     use_layer: None
+#     split_name: 'enf_set'
+#     # only needed if running on DNA sequence input
+#     reference_genome: "../hg38.fa"
+# test:
+#   run_test: False
+#   test_on: 'all'
+
+
+
+# seed: 1234
+# debug: True
+# saving:
+#   head_dir: '.'
+#   checkpoint_dir: 'model_checkpoints_pbmc_modelcombine30'
+#   tb_log_dir: 'tensorboard_logs'
+#   tb_log_prefix: "sequence_emb2cells_pbmc_data_modelcombine30" #"sequence_emb2cells_pbmc_data
+# task:
+#   input:
+#     # valid values:
+#     # 'embeddings' - to train on pre-computed enformer embeddings
+#     # 'sequence' - will load and run from TSS enformer windows and process
+#     #      sequence to embeddings using the trunk of the enformer model
+#     input_type: 'embeddings'
+#     # 3072 for embeddings
+#     emb_dim: 4608
+#     subset_genes_column: None
+#   target:
+#     # True / False if target was already log transformed
+#     log_target_in: True
+#     # (log(x+1) transform data for training (or train on log data if already
+#     # supplied as log transformed
+#     log_transform_train: True
+#     # validate against log(x+1) transformed data
+#     log_transform_validate: True
+#     # standardise observed and predicted values across TSS at validation
+#     std_validate: True
+#     use_enf_data_split: True
+# resource:
+#     device: "cuda"
+#     # everything above 0 will invoke ddp training
+#     num_devices: 0
+#     num_workers: 1
+#     backed_mode: False
+#     # evaluate fully on training data after each epoch
+#     run_train_eval: False
+# optimization:
+#   run_train: True
+#   loss: 'pearson'
+#   # only relevant when using pearson loss
+#   rel_weights_gene: 1.0
+#   rel_weights_cell: 1.0
+#   # Supported loss functions:
+#   # 'mse' 'poisson' 'poissonnll' 'pearson'
+#   pears_norm_mode: 'mean'
+#   # maximum number of epochs to run
+#   epochs: 30
+#   dropout_prob: 0.5
+#   optimizer:
+#     # supported optimizers 'AdamW', 'SGD', 'RMSprop'
+#     optimizer: 'AdamW'
+#     lr: 0.0001
+#     # supported schedules:
+#     # 'constant' 'linear_warm_up_cosine_decay'
+#     # 'linear_warm_up' 'reduce_on_plateau'
+#     lr_schedule: 'reduce_on_plateau'
+#     weight_decay: 0.1
+#   scheduler:
+#     warmup_epochs: 1
+#   swa:
+#     use_swa: False
+#     swa_lr: 0.00001
+#     swa_epoch_start: 5
+#     swa_anneal_epochs: 1
+#     swa_anneal_strategy: 'linear'
+# model:
+#   # when predicting from pre-compute embeddings select:
+#   # 'linear' - for a simple linear layer model
+#   # 'bottleneck' for a two layer MLP with (nonlinear) bottleneck
+#   # if using the Enformer trunk to train from DNA sequence select:
+#   # 'provided' - for a simple linear layer model
+#   # 'provided_bottleneck' for a two layer MLP with (nonlinear) bottleneck
+#   model_type: 'bottleneck'
+#   # apply softplus after linear layer
+#   softplus: True
+#   load_trained_model: False
+#   model_path: "."
+#   bottleneck_dim: 2000
+#   # only RELU implemented select 'RELU' or None
+#   bottleneck_nonlin: 'RELU'
+# enformer:
+#   enformer_trunk:
+#     # specify if to use enformer trunk using the pretrained model to compute
+#     # embeddings from sequence. needs 'task.input_type = 'sequence'
+#     use_enformer_trunk: False
+#     # can be the path to a cached checkpoint or provide
+#     # "EleutherAI--enformer-official-rough" to download it on the fly (~ 1GB)
+#     enformer_copy_path: "."
+#     # for TSS prediction a single prediction bin per Enformer window is
+#     # extracted. Default this is bin 447. Change if modified.
+#     central_bin: 447
+#     # specify if to freeze the enfomer trunk set to --> 'trunk' otherwise
+#     # will finetune the whole model trunk + head
+#     freeze: 'trunk'
+# data:
+#   loader:
+#     batch_size: 10
+#     shuffle: True
+#   dataset:
+#     ann_data_file: "/home/tl688/project/seq2cells_data/pbmc_data/pbmc_preprocessed_matched_with_precomp_combineembeddings.h5ad"
+#     # Name of the layer of the anndata object to use as observed counts.
+#     # Will use anndata.X if None supplied
+#     use_layer: None
+#     split_name: 'enf_set'
+#     # only needed if running on DNA sequence input
+#     reference_genome: "../hg38.fa"
+# test:
+#   run_test: False
+#   test_on: 'all'
+
+
+# # train thymus
+# seed: 1234
+# debug: True
+# saving:
+#   head_dir: '.'
+#   checkpoint_dir: 'model_checkpoints_10xmultiome_Adabelief_mixture' #'model_checkpoints_thymus_atlas_Adabelief_largepearson' #'model_checkpoints_thymus_atlas_ct_HSC_Adabelief_mixture1024'
+#   tb_log_dir: 'tensorboard_logs_10xmultiome'
+#   tb_log_prefix: "sequence_emb2cells_10xmultiome_Adabelief_mixture" #"sequence_emb2cells_thymus_atlas_Adabelief_largepearson" #"sequence_emb2cells_thymus_atlas_ct_HSC_Adabelief_mixture1024"
+# task:
+#   input:
+#     # valid values:
+#     # 'embeddings' - to train on pre-computed enformer embeddings
+#     # 'sequence' - will load and run from TSS enformer windows and process
+#     #      sequence to embeddings using the trunk of the enformer model
+#     input_type: 'embeddings'
+#     # 3072 for embeddings, 4608 for mixture
+#     emb_dim: 3072
+#     subset_genes_column: None
+#   target:
+#     # True / False if target was already log transformed
+#     log_target_in: True
+#     # (log(x+1) transform data for training (or train on log data if already
+#     # supplied as log transformed
+#     log_transform_train: True
+#     # validate against log(x+1) transformed data
+#     log_transform_validate: True
+#     # standardise observed and predicted values across TSS at validation
+#     std_validate: False
+#     use_enf_data_split: True
+# resource:
+#     device: "cuda"
+#     # everything above 0 will invoke ddp training
+#     num_devices: 0
+#     num_workers: 1
+#     backed_mode: False
+#     # evaluate fully on training data after each epoch
+#     run_train_eval: False
+# optimization:
+#   run_train: True
+#   loss: 'mixture' #'pearson' #'mixture'
+#   # only relevant when using pearson loss
+#   rel_weights_gene: 1.0
+#   rel_weights_cell: 1.0
+#   pears_norm_mode: 'mean'
+#   epochs: 30
+#   dropout_prob: 0.5
+#   optimizer:
+#     optimizer: 'Adabelief'
+#     lr: 0.0001
+#     # valid: 'constant' or 'linear_warm_up_cosine_decay'
+#     # or 'linear_warm_up' or 'reduce_on_plateau'
+#     lr_schedule: 'reduce_on_plateau'
+#     weight_decay: 0.1
+#   scheduler:
+#     warmup_epochs: 1
+#   swa:
+#     use_swa: False
+#     swa_lr: 0.00001
+#     swa_epoch_start: 5
+#     swa_anneal_epochs: 1
+#     swa_anneal_strategy: 'linear'
+# model:
+#   # select 'linear;, 'provided' - for linear using a trunk
+#   # or 'bottleneck' for a linear model with (nonlinear) bottleneck
+#   # or 'provided_bottleneck' for a bottleneck model with trunk
+#   model_type: 'bottleneck'
+#   # apply softplus after linear layer
+#   softplus: True
+#   load_trained_model: False
+#   model_path: "."
+#   bottleneck_dim: 2000
+#   bottleneck_nonlin: 'RELU'
+# enformer:
+#   enformer_trunk:
+#     # specify if to use enformer trunk using the pretrained model to compute
+#     # embeddings from sequence. needs 'task.input_type = 'sequence'
+#     use_enformer_trunk: False
+#     # can be the path to a cached checkpoint or provide
+#     # "EleutherAI--enformer-official-rough" download it on the fly (~ 1GB)
+#     enformer_copy_path: ".cache/huggingface/hub/models--EleutherAI--enformer-official-rough\
+#     /snapshots/affe5713ae9017460706a44108289b13c5fee16c"
+#     # for TSS/ROI prediction a single prediction bin per Enformer window was
+#     # extracted. Default this is bin 447. Change if modißfied.
+#     central_bin: 447
+#     # specify if to freeze the enfomer trunk set to --> 'trunk' otherwise
+#     # will finetune the whole model trunk + head
+#     freeze: 'trunk'
+# data:
+#   loader:
+#     batch_size: 512
+#     shuffle: True
+#   dataset: 
+#     ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/multiome/10xmuleiome_seq_embeddings.h5ad"
+#     reference_genome: "../hg38.fa"
+#     use_layer: None
+#     split_name: 'enf_set'
+#   sequence:
+#     seq_context_length: 196608
+#     # if query files are in 0 or 1 based format
+#     pos_base: 1
+# test:
+#   run_test: False
+#   test_on: 'test'
+
+# seed: 1234
+# debug: True
+# saving:
+#   head_dir: '.'
+#   checkpoint_dir: 'model_checkpoints_thymus_atlas_Adabelief_kan' #'model_checkpoints_thymus_atlas_Adabelief_largepearson' #'model_checkpoints_thymus_atlas_ct_HSC_Adabelief_mixture1024'
+#   tb_log_dir: 'tensorboard_logs_thymus_atlas_hsc_kan'
+#   tb_log_prefix: "sequence_emb2cells_thymus_atlas_Adabelief_kan" #"sequence_emb2cells_thymus_atlas_Adabelief_largepearson" #"sequence_emb2cells_thymus_atlas_ct_HSC_Adabelief_mixture1024"
+# task:
+#   input:
+#     # valid values:
+#     # 'embeddings' - to train on pre-computed enformer embeddings
+#     # 'sequence' - will load and run from TSS enformer windows and process
+#     #      sequence to embeddings using the trunk of the enformer model
+#     input_type: 'embeddings'
+#     # 3072 for embeddings, 4608 for mixture
+#     emb_dim: 3072
+#     subset_genes_column: None
+#   target:
+#     # True / False if target was already log transformed
+#     log_target_in: True
+#     # (log(x+1) transform data for training (or train on log data if already
+#     # supplied as log transformed
+#     log_transform_train: True
+#     # validate against log(x+1) transformed data
+#     log_transform_validate: True
+#     # standardise observed and predicted values across TSS at validation
+#     std_validate: False
+#     use_enf_data_split: True
+# resource:
+#     device: "cuda"
+#     # everything above 0 will invoke ddp training
+#     num_devices: 0
+#     num_workers: 1
+#     backed_mode: False
+#     # evaluate fully on training data after each epoch
+#     run_train_eval: False
+# optimization:
+#   run_train: True
+#   loss: 'pearson' #'mixture'
+#   # only relevant when using pearson loss
+#   rel_weights_gene: 1.0
+#   rel_weights_cell: 1.0
+#   pears_norm_mode: 'mean'
+#   epochs: 30
+#   dropout_prob: 0.5
+#   optimizer:
+#     optimizer: 'Adabelief'
+#     lr: 0.0001
+#     # valid: 'constant' or 'linear_warm_up_cosine_decay'
+#     # or 'linear_warm_up' or 'reduce_on_plateau'
+#     lr_schedule: 'reduce_on_plateau'
+#     weight_decay: 0.1
+#   scheduler:
+#     warmup_epochs: 1
+#   swa:
+#     use_swa: False
+#     swa_lr: 0.00001
+#     swa_epoch_start: 5
+#     swa_anneal_epochs: 1
+#     swa_anneal_strategy: 'linear'
+# model:
+#   # select 'linear;, 'provided' - for linear using a trunk
+#   # or 'bottleneck' for a linear model with (nonlinear) bottleneck
+#   # or 'provided_bottleneck' for a bottleneck model with trunk
+#   model_type: 'bottleneck'
+#   # apply softplus after linear layer
+#   softplus: False
+#   load_trained_model: False
+#   model_path: "."
+#   bottleneck_dim: 2000
+#   bottleneck_nonlin: 'RELU'
+# enformer:
+#   enformer_trunk:
+#     # specify if to use enformer trunk using the pretrained model to compute
+#     # embeddings from sequence. needs 'task.input_type = 'sequence'
+#     use_enformer_trunk: False
+#     # can be the path to a cached checkpoint or provide
+#     # "EleutherAI--enformer-official-rough" download it on the fly (~ 1GB)
+#     enformer_copy_path: ".cache/huggingface/hub/models--EleutherAI--enformer-official-rough\
+#     /snapshots/affe5713ae9017460706a44108289b13c5fee16c"
+#     # for TSS/ROI prediction a single prediction bin per Enformer window was
+#     # extracted. Default this is bin 447. Change if modißfied.
+#     central_bin: 447
+#     # specify if to freeze the enfomer trunk set to --> 'trunk' otherwise
+#     # will finetune the whole model trunk + head
+#     freeze: 'trunk'
+# data:
+#   loader:
+#     batch_size: 1024
+#     shuffle: True
+#   dataset: 
+#     ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad"
+#     reference_genome: "../hg38.fa"
+#     use_layer: None
+#     split_name: 'enf_set'
+#   sequence:
+#     seq_context_length: 196608
+#     # if query files are in 0 or 1 based format
+#     pos_base: 1
+# test:
+#   run_test: False
+#   test_on: 'test'

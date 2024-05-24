@@ -1,0 +1,492 @@
+# debug: True
+# profile: False
+# data:
+#   output_path: './eval_pbmc_toy'
+#   # seq2cells model checkpoint
+#   model_chkpt_path: "/path/to/checkpoint.ckpt"
+#   # anndata object hosting the observations and precomputed embeddings
+#   # Requires embeddings stored in the .varm key 'seq_embedding'
+#   ann_data_file: "./resources/single_cell_data/pbmc_toy_example.h5ad"
+#   # column (obs.) name indicating the training test and validation split
+#   split_name: 'enf_set'
+#   # which layer of the anndata object layers to use as observed counts
+#   # usually this should be a normalised counts layer e.g. 'pflog1ppf'
+#   # use 'X' to indicate to use whatever is stored as X in the adata object
+#   observed_counts_layer: 'X'
+#   # <predictions_layer> does not need to be present if running the predictions.
+#   # In that case it will be used as layer name to store the predicted counts in
+#   # the new data frame. If Running only the correlation computation this is
+#   # the layer in which the predicted counts are expected
+#   predictions_layer: 'predicted'
+#   save_predictions: True
+#   # full path where to store AnnData with predictions
+#   save_anndata_path: "./pbmc_toy_example_with_predictions_out.h5ad"
+# task:
+#   run_pred: True
+#   # if running not on 'all' than will save a subset of the anndata object
+#   # with genes corresponding to the chosen set
+#   pred_on: 'all'
+#   # if predictions under are found in the provided anndata object under the
+#   # specified 'predictions_layer' should they be overwritten?
+#   overwrite_pred: True
+#   run_eval: True
+#   eval_on: 'all'
+#   # optional set <subset_genes_column> to a anndata.obs column (0 and 1) that
+#   # should be used to subset the observations (genes)
+#   subset_genes_column: None
+#   eval_highly_variable: True
+#   eval_highly_expressed: True
+# resource:
+#   device: "cpu"
+#   # if <pred_batch_size> set to 0 will use
+#   # the entire length of the (subset) anndata object
+#   pred_batch_size: 10
+#   # if to write predictions per batch to disk (True) or
+#   # (False) perform all in memory
+#   temp_write_pred: True
+#   # read anndata in backed mode?
+#   backed_mode: False
+#   # is running on a subset of data in backed mode (e.g. validation only) this
+#   # will require to write a temporary h5ad file that will be deleted after
+#   # running
+#   backed_mode_temp_h5ad: ""
+
+# debug: True
+# profile: False
+# data:
+#   output_path: './eval_pbmc_data'
+#   # seq2cells model checkpoint
+#   model_chkpt_path: "/gpfs/gibbs/pi/zhao/tl688/seq2cells/pbmc_full/model_checkpoints/sequence_emb2cells_pbmc_data_hyenadna_bs_10_drop_0.5_lr_0.0001_wd_0.1_we_1_lrs_reduce_on_plateau/epoch=5-valid_corr_across_tss=0.062-valid_corr_across_celltypes=0.003-val_loss=1.929.ckpt"
+#   # anndata object hosting the observations and precomputed embeddings
+#   # Requires embeddings stored in the .varm key 'seq_embedding'
+#   ann_data_file: "./pbmc_preprocessed_matched_with_precomp_embeddings_heynadna.h5ad"
+#   # column (obs.) name indicating the training test and validation split
+#   split_name: 'enf_set'
+#   # which layer of the anndata object layers to use as observed counts
+#   # usually this should be a normalised counts layer e.g. 'pflog1ppf'
+#   # use 'X' to indicate to use whatever is stored as X in the adata object
+#   observed_counts_layer: 'X'
+#   # <predictions_layer> does not need to be present if running the predictions.
+#   # In that case it will be used as layer name to store the predicted counts in
+#   # the new data frame. If Running only the correlation computation this is
+#   # the layer in which the predicted counts are expected
+#   predictions_layer: 'predicted'
+#   save_predictions: True
+#   # full path where to store AnnData with predictions
+#   # save_anndata_path: "./pbmc_data_example_with_predictions_out.h5ad"
+#   save_anndata_path: "./pbmc_data_example_with_predictions_out_heynadna.h5ad"
+# task:
+#   run_pred: True
+#   # if running not on 'all' than will save a subset of the anndata object
+#   # with genes corresponding to the chosen set
+#   pred_on: 'all'
+#   # if predictions under are found in the provided anndata object under the
+#   # specified 'predictions_layer' should they be overwritten?
+#   overwrite_pred: True
+#   run_eval: True
+#   eval_on: 'all'
+#   # optional set <subset_genes_column> to a anndata.obs column (0 and 1) that
+#   # should be used to subset the observations (genes)
+#   subset_genes_column: None
+#   eval_highly_variable: True
+#   eval_highly_expressed: True
+# resource:
+#   device: "cuda"
+#   # if <pred_batch_size> set to 0 will use
+#   # the entire length of the (subset) anndata object
+#   pred_batch_size: 10
+#   # if to write predictions per batch to disk (True) or
+#   # (False) perform all in memory
+#   temp_write_pred: True
+#   # read anndata in backed mode?
+#   backed_mode: False
+#   # is running on a subset of data in backed mode (e.g. validation only) this
+#   # will require to write a temporary h5ad file that will be deleted after
+#   # running
+#   backed_mode_temp_h5ad: ""
+
+
+# debug: True
+# profile: False
+# data:
+#   output_path: './eval_thymus_hsc_data'
+#   # seq2cells model checkpoint
+#   model_chkpt_path: "/gpfs/gibbs/pi/zhao/tl688/seq2cells/pbmc_full/model_checkpoints/sequence_emb2cells_pbmc_data_hyenadna_bs_10_drop_0.5_lr_0.0001_wd_0.1_we_1_lrs_reduce_on_plateau/epoch=5-valid_corr_across_tss=0.062-valid_corr_across_celltypes=0.003-val_loss=1.929.ckpt"
+#   # anndata object hosting the observations and precomputed embeddings
+#   # Requires embeddings stored in the .varm key 'seq_embedding'
+#   ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymic_hsc_preprocessed_matched_with_precomp_embeddings_heynadna.h5ad"
+#   # column (obs.) name indicating the training test and validation split
+#   split_name: 'enf_set'
+#   # which layer of the anndata object layers to use as observed counts
+#   # usually this should be a normalised counts layer e.g. 'pflog1ppf'
+#   # use 'X' to indicate to use whatever is stored as X in the adata object
+#   observed_counts_layer: 'X'
+#   # <predictions_layer> does not need to be present if running the predictions.
+#   # In that case it will be used as layer name to store the predicted counts in
+#   # the new data frame. If Running only the correlation computation this is
+#   # the layer in which the predicted counts are expected
+#   predictions_layer: 'predicted'
+#   save_predictions: True
+#   # full path where to store AnnData with predictions
+#   # save_anndata_path: "./pbmc_data_example_with_predictions_out.h5ad"
+#   save_anndata_path: "/gpfs/radev/project/ying_rex/tl688/seq2cells/tests/thymus_hsc_data_example_with_predictions_out_heynadna.h5ad"
+# task:
+#   run_pred: True
+#   # if running not on 'all' than will save a subset of the anndata object
+#   # with genes corresponding to the chosen set
+#   pred_on: 'all'
+#   # if predictions under are found in the provided anndata object under the
+#   # specified 'predictions_layer' should they be overwritten?
+#   overwrite_pred: True
+#   run_eval: True
+#   eval_on: 'all'
+#   # optional set <subset_genes_column> to a anndata.obs column (0 and 1) that
+#   # should be used to subset the observations (genes)
+#   subset_genes_column: None
+#   eval_highly_variable: True
+#   eval_highly_expressed: True
+# resource:
+#   device: "cuda"
+#   # if <pred_batch_size> set to 0 will use
+#   # the entire length of the (subset) anndata object
+#   pred_batch_size: 10
+#   # if to write predictions per batch to disk (True) or
+#   # (False) perform all in memory
+#   temp_write_pred: True
+#   # read anndata in backed mode?
+#   backed_mode: False
+#   # is running on a subset of data in backed mode (e.g. validation only) this
+#   # will require to write a temporary h5ad file that will be deleted after
+#   # running
+#   backed_mode_temp_h5ad: ""
+
+# debug: True
+# profile: False
+# data:
+#   output_path: './eval_thymus_data'
+#   # seq2cells model checkpoint
+#   model_chkpt_path: "/gpfs/gibbs/pi/zhao/tl688/seq2cells/pbmc_full/model_checkpoints_thymus_atlas_hsc/sequence_emb2cells_thymus_atlas_hsc_data_bs_50_drop_0.5_lr_0.0001_wd_0.1_we_1_lrs_reduce_on_plateau/epoch=7-valid_corr_across_tss=0.634-valid_corr_across_celltypes=0.121-val_loss=1.245.ckpt"
+#   # anndata object hosting the observations and precomputed embeddings
+#   # Requires embeddings stored in the .varm key 'seq_embedding'
+#   ann_data_file: "/gpfs/gibbs/pi/zhao/tl688/seq2cell_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad"
+#   # column (obs.) name indicating the training test and validation split
+#   split_name: 'enf_set'
+#   # which layer of the anndata object layers to use as observed counts
+#   # usually this should be a normalised counts layer e.g. 'pflog1ppf'
+#   # use 'X' to indicate to use whatever is stored as X in the adata object
+#   observed_counts_layer: 'X'
+#   # <predictions_layer> does not need to be present if running the predictions.
+#   # In that case it will be used as layer name to store the predicted counts in
+#   # the new data frame. If Running only the correlation computation this is
+#   # the layer in which the predicted counts are expected
+#   predictions_layer: 'predicted'
+#   save_predictions: True
+#   # full path where to store AnnData with predictions
+#   save_anndata_path: "./thymusatlashsc_data_example_with_predictions_out.h5ad"
+# task:
+#   run_pred: True
+#   # if running not on 'all' than will save a subset of the anndata object
+#   # with genes corresponding to the chosen set
+#   pred_on: 'all'
+#   # if predictions under are found in the provided anndata object under the
+#   # specified 'predictions_layer' should they be overwritten?
+#   overwrite_pred: True
+#   run_eval: True
+#   eval_on: 'all'
+#   # optional set <subset_genes_column> to a anndata.obs column (0 and 1) that
+#   # should be used to subset the observations (genes)
+#   subset_genes_column: None
+#   eval_highly_variable: True
+#   eval_highly_expressed: True
+# resource:
+#   device: "cpu"
+#   # if <pred_batch_size> set to 0 will use
+#   # the entire length of the (subset) anndata object
+#   pred_batch_size: 10
+#   # if to write predictions per batch to disk (True) or
+#   # (False) perform all in memory
+#   temp_write_pred: True
+#   # read anndata in backed mode?
+#   backed_mode: False
+#   # is running on a subset of data in backed mode (e.g. validation only) this
+#   # will require to write a temporary h5ad file that will be deleted after
+#   # running
+#   backed_mode_temp_h5ad: ""
+
+# debug: True
+# profile: False
+# data:
+#   output_path: './eval_thymus_hsc_ct_HSC_data_adabeliefweight'
+#   # seq2cells model checkpoint
+#   model_chkpt_path: "/gpfs/gibbs/pi/zhao/tl688/seq2cells/pbmc_full/model_checkpoints/sequence_emb2cells_pbmc_data_hyenadna_bs_10_drop_0.5_lr_0.0001_wd_0.1_we_1_lrs_reduce_on_plateau/epoch=5-valid_corr_across_tss=0.062-valid_corr_across_celltypes=0.003-val_loss=1.929.ckpt"
+#   # anndata object hosting the observations and precomputed embeddings
+#   # Requires embeddings stored in the .varm key 'seq_embedding'
+#   ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad"
+#   # column (obs.) name indicating the training test and validation split
+#   split_name: 'enf_set'
+#   # which layer of the anndata object layers to use as observed counts
+#   # usually this should be a normalised counts layer e.g. 'pflog1ppf'
+#   # use 'X' to indicate to use whatever is stored as X in the adata object
+#   observed_counts_layer: 'X'
+#   # <predictions_layer> does not need to be present if running the predictions.
+#   # In that case it will be used as layer name to store the predicted counts in
+#   # the new data frame. If Running only the correlation computation this is
+#   # the layer in which the predicted counts are expected
+#   predictions_layer: 'predicted'
+#   save_predictions: True
+#   # full path where to store AnnData with predictions
+#   # save_anndata_path: "./pbmc_data_example_with_predictions_out.h5ad"
+#   save_anndata_path: "./thymus_atlas_hsc_emb_out_adabelief_moeweight.h5ad"
+# task:
+#   run_pred: True
+#   # if running not on 'all' than will save a subset of the anndata object
+#   # with genes corresponding to the chosen set
+#   pred_on: 'all'
+#   # if predictions under are found in the provided anndata object under the
+#   # specified 'predictions_layer' should they be overwritten?
+#   overwrite_pred: True
+#   run_eval: True
+#   eval_on: 'all'
+#   # optional set <subset_genes_column> to a anndata.obs column (0 and 1) that
+#   # should be used to subset the observations (genes)
+#   subset_genes_column: None
+#   eval_highly_variable: True
+#   eval_highly_expressed: True
+# resource:
+#   device: "cuda"
+#   # if <pred_batch_size> set to 0 will use
+#   # the entire length of the (subset) anndata object
+#   pred_batch_size: 10
+#   # if to write predictions per batch to disk (True) or
+#   # (False) perform all in memory
+#   temp_write_pred: True
+#   # read anndata in backed mode?
+#   backed_mode: False
+#   # is running on a subset of data in backed mode (e.g. validation only) this
+#   # will require to write a temporary h5ad file that will be deleted after
+#   # running
+#   backed_mode_temp_h5ad: ""
+
+
+# debug: True
+# profile: False
+# data:
+#   output_path: './eval_thymus_hsc_data_adabeliefweight_mixture1024' #'./eval_thymus_hsc_ct_HSC_data_adabeliefweight_combemb'
+#   # seq2cells model checkpoint
+#   model_chkpt_path: "/gpfs/gibbs/pi/zhao/tl688/seq2cells/pbmc_full/model_checkpoints/sequence_emb2cells_pbmc_data_hyenadna_bs_10_drop_0.5_lr_0.0001_wd_0.1_we_1_lrs_reduce_on_plateau/epoch=5-valid_corr_across_tss=0.062-valid_corr_across_celltypes=0.003-val_loss=1.929.ckpt"
+#   # anndata object hosting the observations and precomputed embeddings
+#   # Requires embeddings stored in the .varm key 'seq_embedding'
+#   ann_data_file:  "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad"
+#   #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad"  #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb_combemb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" 
+#   # column (obs.) name indicating the training test and validation split
+#   split_name: 'enf_set'
+#   # which layer of the anndata object layers to use as observed counts
+#   # usually this should be a normalised counts layer e.g. 'pflog1ppf'
+#   # use 'X' to indicate to use whatever is stored as X in the adata object
+#   observed_counts_layer: 'X'
+#   # <predictions_layer> does not need to be present if running the predictions.
+#   # In that case it will be used as layer name to store the predicted counts in
+#   # the new data frame. If Running only the correlation computation this is
+#   # the layer in which the predicted counts are expected
+#   predictions_layer: 'predicted'
+#   save_predictions: True
+#   # full path where to store AnnData with predictions
+#   # save_anndata_path: "./pbmc_data_example_with_predictions_out.h5ad"
+#   save_anndata_path: "./HSC_thymus_atlas_hsc_emb_out_predictionmixcross.h5ad"
+# task:
+#   run_pred: True
+#   # if running not on 'all' than will save a subset of the anndata object
+#   # with genes corresponding to the chosen set
+#   pred_on: 'all'
+#   # if predictions under are found in the provided anndata object under the
+#   # specified 'predictions_layer' should they be overwritten?
+#   overwrite_pred: True
+#   run_eval: True
+#   eval_on: 'all'
+#   # optional set <subset_genes_column> to a anndata.obs column (0 and 1) that
+#   # should be used to subset the observations (genes)
+#   subset_genes_column: None
+#   eval_highly_variable: True
+#   eval_highly_expressed: True
+# resource:
+#   device: "cuda"
+#   # if <pred_batch_size> set to 0 will use
+#   # the entire length of the (subset) anndata object
+#   pred_batch_size: 10
+#   # if to write predictions per batch to disk (True) or
+#   # (False) perform all in memory
+#   temp_write_pred: True
+#   # read anndata in backed mode?
+#   backed_mode: False
+#   # is running on a subset of data in backed mode (e.g. validation only) this
+#   # will require to write a temporary h5ad file that will be deleted after
+#   # running
+#   backed_mode_temp_h5ad: ""
+
+
+debug: True
+profile: False
+data:
+  output_path: './eval_thymus_hsc_data_adabeliefweight_predlossnew' #'./eval_thymus_hsc_ct_HSC_data_adabeliefweight_combemb'
+  # seq2cells model checkpoint
+  model_chkpt_path: "/gpfs/gibbs/pi/zhao/tl688/seq2cells/pbmc_full/model_checkpoints/sequence_emb2cells_pbmc_data_hyenadna_bs_10_drop_0.5_lr_0.0001_wd_0.1_we_1_lrs_reduce_on_plateau/epoch=5-valid_corr_across_tss=0.062-valid_corr_across_celltypes=0.003-val_loss=1.929.ckpt"
+  # anndata object hosting the observations and precomputed embeddings
+  # Requires embeddings stored in the .varm key 'seq_embedding'
+  ann_data_file:  "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" 
+  #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad"  #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb_combemb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" 
+  # column (obs.) name indicating the training test and validation split
+  split_name: 'enf_set'
+  # which layer of the anndata object layers to use as observed counts
+  # usually this should be a normalised counts layer e.g. 'pflog1ppf'
+  # use 'X' to indicate to use whatever is stored as X in the adata object
+  observed_counts_layer: 'X'
+  # <predictions_layer> does not need to be present if running the predictions.
+  # In that case it will be used as layer name to store the predicted counts in
+  # the new data frame. If Running only the correlation computation this is
+  # the layer in which the predicted counts are expected
+  predictions_layer: 'predicted'
+  save_predictions: True
+  # full path where to store AnnData with predictions
+  # save_anndata_path: "./pbmc_data_example_with_predictions_out.h5ad"
+  save_anndata_path: "./HSC_thymus_atlas_hsc_emb_out_predloss_adabelief_pearson_nonsum.h5ad"
+task:
+  run_pred: True
+  # if running not on 'all' than will save a subset of the anndata object
+  # with genes corresponding to the chosen set
+  pred_on: 'all'
+  # if predictions under are found in the provided anndata object under the
+  # specified 'predictions_layer' should they be overwritten?
+  overwrite_pred: True
+  run_eval: True
+  eval_on: 'all'
+  # optional set <subset_genes_column> to a anndata.obs column (0 and 1) that
+  # should be used to subset the observations (genes)
+  subset_genes_column: None
+  eval_highly_variable: True
+  eval_highly_expressed: True
+resource:
+  device: "cuda"
+  # if <pred_batch_size> set to 0 will use
+  # the entire length of the (subset) anndata object
+  pred_batch_size: 10
+  # if to write predictions per batch to disk (True) or
+  # (False) perform all in memory
+  temp_write_pred: True
+  # read anndata in backed mode?
+  backed_mode: False
+  # is running on a subset of data in backed mode (e.g. validation only) this
+  # will require to write a temporary h5ad file that will be deleted after
+  # running
+  backed_mode_temp_h5ad: ""
+
+
+
+# debug: True
+# profile: False
+# data:
+#   output_path: './eval_pbmc_emb_adabeliefweight_all'
+#   # seq2cells model checkpoint
+#   model_chkpt_path: "/gpfs/gibbs/pi/zhao/tl688/seq2cells/pbmc_full/model_checkpoints/sequence_emb2cells_pbmc_data_hyenadna_bs_10_drop_0.5_lr_0.0001_wd_0.1_we_1_lrs_reduce_on_plateau/epoch=5-valid_corr_across_tss=0.062-valid_corr_across_celltypes=0.003-val_loss=1.929.ckpt"
+#   # anndata object hosting the observations and precomputed embeddings
+#   # Requires embeddings stored in the .varm key 'seq_embedding'
+#   ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/pbmc_data/ct_data/CD8_T_2_pbmc_preprocessed_matched.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad"
+#   # column (obs.) name indicating the training test and validation split
+#   split_name: 'enf_set'
+#   # which layer of the anndata object layers to use as observed counts
+#   # usually this should be a normalised counts layer e.g. 'pflog1ppf'
+#   # use 'X' to indicate to use whatever is stored as X in the adata object
+#   observed_counts_layer: 'X'
+#   # <predictions_layer> does not need to be present if running the predictions.
+#   # In that case it will be used as layer name to store the predicted counts in
+#   # the new data frame. If Running only the correlation computation this is
+#   # the layer in which the predicted counts are expected
+#   predictions_layer: 'predicted'
+#   save_predictions: True
+#   # full path where to store AnnData with predictions
+#   # save_anndata_path: "./pbmc_data_example_with_predictions_out.h5ad"
+#   save_anndata_path: "./CD8_T_2_pbmc_preprocessed_matched_emb_out_adabelief.h5ad"
+# task:
+#   run_pred: True
+#   # if running not on 'all' than will save a subset of the anndata object
+#   # with genes corresponding to the chosen set
+#   pred_on: 'all'
+#   # if predictions under are found in the provided anndata object under the
+#   # specified 'predictions_layer' should they be overwritten?
+#   overwrite_pred: True
+#   run_eval: True
+#   eval_on: 'all'
+#   # optional set <subset_genes_column> to a anndata.obs column (0 and 1) that
+#   # should be used to subset the observations (genes)
+#   subset_genes_column: None
+#   eval_highly_variable: True
+#   eval_highly_expressed: True
+# resource:
+#   device: "cuda"
+#   # if <pred_batch_size> set to 0 will use
+#   # the entire length of the (subset) anndata object
+#   pred_batch_size: 10
+#   # if to write predictions per batch to disk (True) or
+#   # (False) perform all in memory
+#   temp_write_pred: True
+#   # read anndata in backed mode?
+#   backed_mode: False
+#   # is running on a subset of data in backed mode (e.g. validation only) this
+#   # will require to write a temporary h5ad file that will be deleted after
+#   # running
+#   backed_mode_temp_h5ad: ""
+
+
+# debug: True
+# profile: False
+# data:
+#   output_path: './eval_pbmc_preprocessed_data_adabeliefweight_largecomp' #'./eval_thymus_hsc_ct_HSC_data_adabeliefweight_combemb'
+#   # seq2cells model checkpoint
+#   model_chkpt_path: "/gpfs/gibbs/pi/zhao/tl688/seq2cells/pbmc_full/model_checkpoints/sequence_emb2cells_pbmc_data_hyenadna_bs_10_drop_0.5_lr_0.0001_wd_0.1_we_1_lrs_reduce_on_plateau/epoch=5-valid_corr_across_tss=0.062-valid_corr_across_celltypes=0.003-val_loss=1.929.ckpt"
+#   # anndata object hosting the observations and precomputed embeddings
+#   # Requires embeddings stored in the .varm key 'seq_embedding'
+#   ann_data_file:  "/home/tl688/project/seq2cells_data/pbmc_data/pbmc_preprocessed_matched_with_precomp_combineembeddings.h5ad"
+#   # column (obs.) name indicating the training test and validation split
+#   split_name: 'enf_set'
+#   # which layer of the anndata object layers to use as observed counts
+#   # usually this should be a normalised counts layer e.g. 'pflog1ppf'
+#   # use 'X' to indicate to use whatever is stored as X in the adata object
+#   observed_counts_layer: 'X'
+#   # <predictions_layer> does not need to be present if running the predictions.
+#   # In that case it will be used as layer name to store the predicted counts in
+#   # the new data frame. If Running only the correlation computation this is
+#   # the layer in which the predicted counts are expected
+#   predictions_layer: 'predicted'
+#   save_predictions: True
+#   # full path where to store AnnData with predictions
+#   # save_anndata_path: "./pbmc_data_example_with_predictions_out.h5ad"
+#   save_anndata_path: "./pbmc_preprocessed_matched_out_largeemb.h5ad"
+# task:
+#   run_pred: True
+#   # if running not on 'all' than will save a subset of the anndata object
+#   # with genes corresponding to the chosen set
+#   pred_on: 'all'
+#   # if predictions under are found in the provided anndata object under the
+#   # specified 'predictions_layer' should they be overwritten?
+#   overwrite_pred: True
+#   run_eval: True
+#   eval_on: 'all'
+#   # optional set <subset_genes_column> to a anndata.obs column (0 and 1) that
+#   # should be used to subset the observations (genes)
+#   subset_genes_column: None
+#   eval_highly_variable: True
+#   eval_highly_expressed: True
+# resource:
+#   device: "cuda"
+#   # if <pred_batch_size> set to 0 will use
+#   # the entire length of the (subset) anndata object
+#   pred_batch_size: 10
+#   # if to write predictions per batch to disk (True) or
+#   # (False) perform all in memory
+#   temp_write_pred: True
+#   # read anndata in backed mode?
+#   backed_mode: False
+#   # is running on a subset of data in backed mode (e.g. validation only) this
+#   # will require to write a temporary h5ad file that will be deleted after
+#   # running
+#   backed_mode_temp_h5ad: ""
+

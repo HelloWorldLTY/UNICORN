@@ -1,0 +1,120 @@
+# train thymus
+seed: 1234
+debug: True
+saving:
+  head_dir: '.'
+  checkpoint_dir: 'model_checkpoints_individual15' #'model_checkpoints_thymus_atlas_Adabelief_largepearson' #'model_checkpoints_thymus_atlas_ct_HSC_Adabelief_mixture1024'
+  tb_log_dir: 'tensorboard_logs_individual15'
+  tb_log_prefix: "sequence_emb2cells_individual15" #"sequence_emb2cells_thymus_atlas_Adabelief_largepearson" #"sequence_emb2cells_thymus_atlas_ct_HSC_Adabelief_mixture1024"
+task:
+  input:
+    # valid values:
+    # 'embeddings' - to train on pre-computed enformer embeddings
+    # 'sequence' - will load and run from TSS enformer windows and process
+    #      sequence to embeddings using the trunk of the enformer model
+    input_type: 'embeddings'
+    # 3072 for embeddings, 4608 for mixture
+    emb_dim: 3072
+    subset_genes_column: None
+  target:
+    # True / False if target was already log transformed
+    log_target_in: True
+    # (log(x+1) transform data for training (or train on log data if already
+    # supplied as log transformed
+    log_transform_train: True
+    # validate against log(x+1) transformed data
+    log_transform_validate: True
+    # standardise observed and predicted values across TSS at validation
+    std_validate: False
+    use_enf_data_split: True
+resource:
+    device: "cuda"
+    # everything above 0 will invoke ddp training
+    num_devices: 0
+    num_workers: 1
+    backed_mode: False
+    # evaluate fully on training data after each epoch
+    run_train_eval: False
+optimization:
+  run_train: True
+  loss: 'mixture' #'pearson' #'mixture'
+  # only relevant when using pearson loss
+  rel_weights_gene: 1.0
+  rel_weights_cell: 1.0
+  pears_norm_mode: 'mean'
+  epochs: 30
+  dropout_prob: 0.5
+  optimizer:
+    optimizer: 'Adabelief'
+    lr: 0.0001
+    # valid: 'constant' or 'linear_warm_up_cosine_decay'
+    # or 'linear_warm_up' or 'reduce_on_plateau'
+    lr_schedule: 'reduce_on_plateau'
+    weight_decay: 0.1
+  scheduler:
+    warmup_epochs: 1
+  swa:
+    use_swa: False
+    swa_lr: 0.00001
+    swa_epoch_start: 5
+    swa_anneal_epochs: 1
+    swa_anneal_strategy: 'linear'
+model:
+  # select 'linear;, 'provided' - for linear using a trunk
+  # or 'bottleneck' for a linear model with (nonlinear) bottleneck
+  # or 'provided_bottleneck' for a bottleneck model with trunk
+  model_type: 'bottleneck'
+  # apply softplus after linear layer
+  softplus: True
+  load_trained_model: False
+  model_path: "."
+  bottleneck_dim: 2000
+  bottleneck_nonlin: 'RELU'
+enformer:
+  enformer_trunk:
+    # specify if to use enformer trunk using the pretrained model to compute
+    # embeddings from sequence. needs 'task.input_type = 'sequence'
+    use_enformer_trunk: False
+    # can be the path to a cached checkpoint or provide
+    # "EleutherAI--enformer-official-rough" download it on the fly (~ 1GB)
+    enformer_copy_path: ".cache/huggingface/hub/models--EleutherAI--enformer-official-rough\
+    /snapshots/affe5713ae9017460706a44108289b13c5fee16c"
+    # for TSS/ROI prediction a single prediction bin per Enformer window was
+    # extracted. Default this is bin 447. Change if modißfied.
+    central_bin: 447
+    # specify if to freeze the enfomer trunk set to --> 'trunk' otherwise
+    # will finetune the whole model trunk + head
+    freeze: 'trunk'
+data:
+  loader:
+    batch_size: 512
+    shuffle: True
+  dataset: 
+    ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/individual_gtex/gtex_input/GTEx_v9_snRNAseq_data_GTEX-1I1GU.h5ad"
+    reference_genome: "/gpfs/radev/project/ying_rex/tl688/seq2cells/individual_fasta/individual_genome_GTEX-1I1GU-0826-SM-GQZA2.fa"
+    use_layer: None
+    split_name: 'enf_set'
+  sequence:
+    seq_context_length: 196608
+    # if query files are in 0 or 1 based format
+    pos_base: 1
+test:
+  run_test: False
+  test_on: 'test'
+
+# 1 GTEx_v9_snRNAseq_data_GTEX-12BJ1.h5ad
+# 2 GTEx_v9_snRNAseq_data_GTEX-1R9PN.h5ad
+# 3 GTEx_v9_snRNAseq_data_GTEX-1MCC2.h5ad
+# 4 GTEx_v9_snRNAseq_data_GTEX-1HSMQ.h5ad
+# 5 GTEx_v9_snRNAseq_data_GTEX-1CAMS.h5ad
+# 6 GTEx_v9_snRNAseq_data_GTEX-1CAMR.h5ad
+# 7 GTEx_v9_snRNAseq_data_GTEX-16BQI.h5ad
+# 8 GTEx_v9_snRNAseq_data_GTEX-15SB6.h5ad
+# 9 GTEx_v9_snRNAseq_data_GTEX-15RIE.h5ad
+# 10 GTEx_v9_snRNAseq_data_GTEX-15EOM.h5ad
+# 11 GTEx_v9_snRNAseq_data_GTEX-15CHR.h5ad
+# 12 GTEx_v9_snRNAseq_data_GTEX-145ME.h5ad
+# 13 GTEx_v9_snRNAseq_data_GTEX-144GM.h5ad
+# 14 GTEx_v9_snRNAseq_data_GTEX-13N11.h5ad
+# 15 GTEx_v9_snRNAseq_data_GTEX-1I1GU.h5ad
+# 16 GTEx_v9_snRNAseq_data_GTEX-1ICG6.h5ad

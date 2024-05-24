@@ -1,0 +1,11 @@
+python create_seq_window_queries.py \
+    --in "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/multiome/10xmultiome_peaks.bed" \
+    --ref_genome ../hg38.fa \
+    --out ./query_tss_10x_example.tsv \
+    --chromosome_col 1\
+    --position_col 3\
+    --position_base 1 \
+    --strand_col 6 \
+    --group_id_col 7 \
+    --additional_id_col 8 \
+    --no-stitch

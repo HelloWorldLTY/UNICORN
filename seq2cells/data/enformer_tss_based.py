@@ -126,6 +126,7 @@ class AnnDataEmbeddingTssDataset(Dataset):
         data_split: str,
         split_name: str,
         subset_genes_col: Optional[str] = None,
+        subset_feature_types: Optional[str] = None,
         use_layer: Optional[str] = None,
         backed_mode: Optional[bool] = False,
     ) -> None:
@@ -196,14 +197,21 @@ class AnnDataEmbeddingTssDataset(Dataset):
             else:
                 use_idx = self.anndata.obs.index
 
+        if subset_feature_types is not None:
+            assert (
+                "feature_types" in self.anndata.var_keys()
+            ), f"feature_types is not a valid column in anndata.obs"
+            use_idx = use_idx & self.anndata.obs[
+                    self.anndata.obs["feature_types"] == subset_feature_types
+                ].index
+
         # subset targets
-        self.targets = self.anndata[use_idx, :]
+        self.targets = self.anndata[use_idx, :].X.toarray()
         # init inputs from embeddings embedding - subset to set of interest
         self.inputs = self.anndata[use_idx, :].obsm["seq_embedding"]
-        print(type(self.inputs))
-        if type(self.inputs) == ad._core.views.ArrayView:
-            self.inputs = pd.DataFrame(self.inputs)
-            self.inputs.index = list(self.targets.obs_names)
+        # if type(self.inputs) == ad._core.views.ArrayView:
+        #     self.inputs = pd.DataFrame(self.inputs)
+        #     self.inputs.index = list(self.targets.obs_names)
 
     def __len__(self):
         """Get length of the dataset"""
@@ -225,8 +233,10 @@ class AnnDataEmbeddingTssDataset(Dataset):
         y: torch.Tensor
             A torch tensor of length [num_cells].
         """
-        x = Tensor(self.inputs.iloc[idx, :].values)
-        y = Tensor(self.targets.chunk_X(select=[idx])[0])
+        # x = Tensor(self.inputs.iloc[idx, :].values)
+        x = Tensor(self.inputs[idx, :])
+        # y = Tensor(self.targets.chunk_X(select=[idx])[0])
+        y = Tensor(self.targets[idx, :])
 
         return x, y
 

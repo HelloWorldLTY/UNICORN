@@ -108,6 +108,7 @@ def get_dataloader(
         Dataloader to return sequence embedding and expression across cells
         per instance.
     """
+
     all_data = AnnDataEmbeddingTssDataset(
         ann_in=adata,
         data_split=config["task"]["pred_on"],
@@ -733,22 +734,66 @@ def calculate_correlations(config: dict, adata: ad.AnnData) -> dict:
 
     metric_adata, metric_adata_hv, metric_adata_he = prepare_metric_adata(config, adata)
 
+    # test on all batch
     cross_gene_correlations = calculate_cross_gene_correlation(
         config, metric_adata, metric_adata_hv, metric_adata_he
     )
-
     cross_cell_correlations, cross_cell_cor_per_gene = calculate_cross_cell_correlation(
         config, metric_adata, metric_adata_hv, metric_adata_he
     )
 
-    metric_dict["mean_cross_gene_cor_all"] = cross_gene_correlations['cor_all']
-    metric_dict["mean_cross_gene_cor_hv"] = cross_gene_correlations['cor_hv']
-    metric_dict["mean_cross_gene_cor_he"] = cross_gene_correlations['cor_he']
+    # test on gene
+    gene_cross_gene_correlations = calculate_cross_gene_correlation(
+        config, metric_adata[metric_adata.obs["batch"] == "gene"], 
+        metric_adata_hv[metric_adata_hv.obs["batch"] == "gene"] if metric_adata_hv is not None else None, 
+        metric_adata_he[metric_adata_he.obs["batch"] == "gene"] if metric_adata_he is not None else None
+    )
+    gene_cross_cell_correlations, gene_cross_cell_cor_per_gene = calculate_cross_cell_correlation(
+        config, metric_adata[metric_adata.obs["batch"] == "gene"], 
+        metric_adata_hv[metric_adata_hv.obs["batch"] == "gene"] if metric_adata_hv is not None else None, 
+        metric_adata_he[metric_adata_he.obs["batch"] == "gene"] if metric_adata_he is not None else None
+    )
 
+    # test on ataac
+    ataac_cross_gene_correlations = calculate_cross_gene_correlation(
+        config, metric_adata[metric_adata.obs["batch"] == "ataac"], 
+        metric_adata_hv[metric_adata_hv.obs["batch"] == "ataac"] if metric_adata_hv is not None else None, 
+        metric_adata_he[metric_adata_he.obs["batch"] == "ataac"] if metric_adata_he is not None else None
+    )
+    ataac_cross_cell_correlations, ataac_cross_cell_cor_per_gene = calculate_cross_cell_correlation(
+        config, metric_adata[metric_adata.obs["batch"] == "ataac"], 
+        metric_adata_hv[metric_adata_hv.obs["batch"] == "ataac"] if metric_adata_hv is not None else None, 
+        metric_adata_he[metric_adata_he.obs["batch"] == "ataac"] if metric_adata_he is not None else None
+    )
+
+    # cross gene correlations
+    metric_dict["mean_cross_gene_cor_all"] = cross_gene_correlations['cor_all']
+    metric_dict["mean_cross_gene_cor_all_hv"] = cross_gene_correlations['cor_hv']
+    metric_dict["mean_cross_gene_cor_all_he"] = cross_gene_correlations['cor_he']
+
+    metric_dict["mean_cross_gene_cor_gene"] = gene_cross_gene_correlations['cor_all']
+    metric_dict["mean_cross_gene_cor_gene_hv"] = gene_cross_gene_correlations['cor_hv']
+    metric_dict["mean_cross_gene_cor_gene_he"] = gene_cross_gene_correlations['cor_he']
+
+    metric_dict["mean_cross_gene_cor_ataac"] = ataac_cross_gene_correlations['cor_all']
+    metric_dict["mean_cross_gene_cor_ataac_hv"] = ataac_cross_gene_correlations['cor_hv']
+    metric_dict["mean_cross_gene_cor_ataac_he"] = ataac_cross_gene_correlations['cor_he']
+
+    # cross cell correlations
     metric_dict["mean_cross_cell_cor_all"] = cross_cell_correlations['cor_all']
-    metric_dict["cross_cell_cor_per_gene_all"] = cross_cell_cor_per_gene
-    metric_dict["mean_cross_cell_cor_hv"] = cross_cell_correlations['cor_hv']
-    metric_dict["mean_cross_cell_cor_he"] = cross_cell_correlations['cor_he']
+    metric_dict["cross_cell_cor_per_gene_all_all"] = cross_cell_cor_per_gene
+    metric_dict["mean_cross_cell_cor_all_hv"] = cross_cell_correlations['cor_hv']
+    metric_dict["mean_cross_cell_cor_all_he"] = cross_cell_correlations['cor_he']
+
+    metric_dict["mean_cross_cell_cor_gene"] = gene_cross_cell_correlations['cor_all']
+    metric_dict["cross_cell_cor_per_gene_all_gene"] = gene_cross_cell_cor_per_gene
+    metric_dict["mean_cross_cell_cor_gene_hv"] = gene_cross_cell_correlations['cor_hv']
+    metric_dict["mean_cross_cell_cor_gene_he"] = gene_cross_cell_correlations['cor_he']
+
+    metric_dict["mean_cross_cell_cor_ataac"] = ataac_cross_cell_correlations['cor_all']
+    metric_dict["cross_cell_cor_per_gene_all_ataac"] = ataac_cross_cell_cor_per_gene
+    metric_dict["mean_cross_cell_cor_ataac_hv"] = ataac_cross_cell_correlations['cor_hv']
+    metric_dict["mean_cross_cell_cor_ataac_he"] = ataac_cross_cell_correlations['cor_he']
 
     return metric_dict
 
@@ -756,7 +801,8 @@ def calculate_correlations(config: dict, adata: ad.AnnData) -> dict:
 def save_correlations(
         config: dict,
         metric_dict: dict,
-        output_path: str
+        output_path: str,
+        suffix: str = "all",
 ) -> None:
     """Save calculated correlations
 
@@ -770,21 +816,23 @@ def save_correlations(
         cross cell correlation pandas data frame.
     output_path: str,
         Directory to store the results.
+    suffix: str
+        Suffix to append to the file names (all, gene, ataac).
     """
     # assemble metrics in data frame
-    assemble_gene_set = ["all"]
-    assemble_cross_gene = [metric_dict["mean_cross_gene_cor_all"]]
-    assemble_cross_cell = [metric_dict["mean_cross_cell_cor_all"]]
+    assemble_gene_set = [suffix]
+    assemble_cross_gene = [metric_dict[f"mean_cross_gene_cor_{suffix}"]]
+    assemble_cross_cell = [metric_dict[f"mean_cross_cell_cor_{suffix}"]]
 
     if config["task"]["eval_highly_variable"]:
         assemble_gene_set.append("highly_variable")
-        assemble_cross_gene.append(metric_dict["mean_cross_gene_cor_hv"])
-        assemble_cross_cell.append(metric_dict["mean_cross_cell_cor_hv"])
+        assemble_cross_gene.append(metric_dict[f"mean_cross_gene_cor_{suffix}_hv"])
+        assemble_cross_cell.append(metric_dict[f"mean_cross_cell_cor_{suffix}_hv"])
 
     if config["task"]["eval_highly_expressed"]:
         assemble_gene_set.append("highly_expressed")
-        assemble_cross_gene.append(metric_dict["mean_cross_gene_cor_he"])
-        assemble_cross_cell.append(metric_dict["mean_cross_cell_cor_he"])
+        assemble_cross_gene.append(metric_dict[f"mean_cross_gene_cor_{suffix}_he"])
+        assemble_cross_cell.append(metric_dict[f"mean_cross_cell_cor_{suffix}_he"])
 
     df_matrix_metrics = pd.DataFrame(
         {
@@ -795,8 +843,8 @@ def save_correlations(
     )
 
     # save per gene cross-cell correlation
-    metric_dict["cross_cell_cor_per_gene_all"].to_csv(
-        f"{output_path}/df_eval_cross_cell_correlation_per_gene" 
+    metric_dict[f"cross_cell_cor_per_gene_all_{suffix}"].to_csv(
+        f"{output_path}/df_eval_cross_cell_correlation_per_gene_{suffix}" 
         f"_{config['task']['eval_on']}.tsv",
         sep="\t",
         header=False,
@@ -805,7 +853,7 @@ def save_correlations(
 
     # save summary df of mean correlations
     df_matrix_metrics.to_csv(
-        f"{output_path}/df_eval_mean_cor_summary"
+        f"{output_path}/df_eval_{suffix}_mean_cor_summary"
         f"_{config['task']['eval_on']}.tsv",
         sep="\t",
         index=False,
@@ -822,8 +870,8 @@ if __name__ == "__main__":
     config = OmegaConf.to_object(OmegaConf.merge(config, cli_config))
 
     # overwrite if cli supplied checkpoint location
-    if 'checkpoint_file' in cli_config:
-        config['data']['model_chkpt_path'] = cli_config.checkpoint_file
+    # if 'checkpoint_file' in cli_config:
+    #     config['data']['model_chkpt_path'] = cli_config.checkpoint_file
 
     # log in debug mode?
     if config["debug"]:
@@ -857,7 +905,9 @@ if __name__ == "__main__":
         metric_dict = calculate_correlations(config, adata)
 
         # 4) Save metrics ====================
-        save_correlations(config, metric_dict, output_path)
+        save_correlations(config, metric_dict, output_path, suffix="all")
+        save_correlations(config, metric_dict, output_path, suffix="gene")
+        save_correlations(config, metric_dict, output_path, suffix="ataac")
 
     # 5)  ================================
     if os.path.exists(config["resource"]["backed_mode_temp_h5ad"]):

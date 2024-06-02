@@ -424,7 +424,7 @@
 seed: 1234
 debug: True
 saving:
-  head_dir: '.'
+  head_dir: '/home/th748/scratch/seq2cells'
   checkpoint_dir: 'model_checkpoints_thymus_atlas_Adabelief_mixture_2layer' #'model_checkpoints_thymus_atlas_Adabelief_largepearson' #'model_checkpoints_thymus_atlas_ct_HSC_Adabelief_mixture1024'
   tb_log_dir: 'tensorboard_logs_thymus_atlas_hsc_2layer'
   tb_log_prefix: "sequence_emb2cells_thymus_atlas_Adabelief_mixture_2layer" #"sequence_emb2cells_thymus_atlas_Adabelief_largepearson" #"sequence_emb2cells_thymus_atlas_ct_HSC_Adabelief_mixture1024"
@@ -511,9 +511,10 @@ data:
   loader:
     batch_size: 50
     shuffle: True
-  dataset: 
-    ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_combembeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb_standardscale.h5ad"#"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad"
+  dataset:
+    # ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_combembeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb_standardscale.h5ad"#"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad"
     #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_combembeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb_combemb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" # "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" 
+    ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/multiome/10xmuleiome_seq_embeddings.h5ad"
     reference_genome: "../hg38.fa"
     use_layer: None
     split_name: 'enf_set'

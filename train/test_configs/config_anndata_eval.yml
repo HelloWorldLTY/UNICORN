@@ -664,12 +664,13 @@
 debug: True
 profile: False
 data:
-  output_path: './eval_thymus_hsc_dropout' #'./eval_thymus_hsc_ct_HSC_data_adabeliefweight_combemb'
+  output_path: '/home/th748/scratch/seq2cells/eval_thymus_hsc_dropout' #'./eval_thymus_hsc_ct_HSC_data_adabeliefweight_combemb'
   # seq2cells model checkpoint
-  model_chkpt_path: "/gpfs/radev/project/ying_rex/tl688/seq2cells/tests/model_checkpoints_thymus_atlas_Adabelief_scale/sequence_emb2cells_thymus_atlas_Adabelief_scale_bs_1024_drop_0.5_lr_0.0001_wd_0.1_we_1_lrs_reduce_on_plateau/epoch=8-valid_corr_across_tss=0.614-valid_corr_across_celltypes=0.382-val_loss=1.004.ckpt"
+  # model_chkpt_path: "/gpfs/radev/project/ying_rex/tl688/seq2cells/tests/model_checkpoints_thymus_atlas_Adabelief_scale/sequence_emb2cells_thymus_atlas_Adabelief_scale_bs_1024_drop_0.5_lr_0.0001_wd_0.1_we_1_lrs_reduce_on_plateau/epoch=8-valid_corr_across_tss=0.614-valid_corr_across_celltypes=0.382-val_loss=1.004.ckpt"
+  model_chkpt_path: "/home/th748/scratch/seq2cells/model_checkpoints_thymus_atlas_Adabelief_mixture_2layer/sequence_emb2cells_thymus_atlas_Adabelief_mixture_2layer_bs_50_drop_0.5_lr_0.0001_wd_0.1_we_1_lrs_reduce_on_plateau/epoch=11-valid_corr_across_tss=0.371-valid_corr_across_celltypes=0.148-val_loss=1.944.ckpt"
   # anndata object hosting the observations and precomputed embeddings
   # Requires embeddings stored in the .varm key 'seq_embedding'
-  ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" 
+  ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/multiome/10xmuleiome_seq_embeddings.h5ad"
   #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad"  #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb_predictscale.h5ad" 
   #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad"  #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb_combemb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" 
   # column (obs.) name indicating the training test and validation split
@@ -686,22 +687,22 @@ data:
   save_predictions: True
   # full path where to store AnnData with predictions
   # save_anndata_path: "./pbmc_data_example_with_predictions_out.h5ad"
-  save_anndata_path: "./thymus_atlas_hsc_matched_dropout.h5ad"
+  save_anndata_path: "/home/th748/scratch/seq2cells/eval_thymus_hsc_dropout/thymus_atlas_hsc_matched_dropout.h5ad"
 task:
   run_pred: True
   # if running not on 'all' than will save a subset of the anndata object
   # with genes corresponding to the chosen set
-  pred_on: 'all'
+  pred_on: 'test'
   # if predictions under are found in the provided anndata object under the
   # specified 'predictions_layer' should they be overwritten?
   overwrite_pred: True
   run_eval: True
-  eval_on: 'all'
+  eval_on: 'test'
   # optional set <subset_genes_column> to a anndata.obs column (0 and 1) that
   # should be used to subset the observations (genes)
   subset_genes_column: None
   eval_highly_variable: True
-  eval_highly_expressed: True
+  eval_highly_expressed: False
 resource:
   device: "cuda"
   # if <pred_batch_size> set to 0 will use

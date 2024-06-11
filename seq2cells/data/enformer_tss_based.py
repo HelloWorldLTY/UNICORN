@@ -126,9 +126,10 @@ class AnnDataEmbeddingTssDataset(Dataset):
         data_split: str,
         split_name: str,
         subset_genes_col: Optional[str] = None,
-        subset_feature_types: Optional[str] = None,
+        subset_feature_type: str = None,
         use_layer: Optional[str] = None,
         backed_mode: Optional[bool] = False,
+        return_feature_types: bool = False,
     ) -> None:
         """Initialise the dataset
 
@@ -154,8 +155,11 @@ class AnnDataEmbeddingTssDataset(Dataset):
 
         self.data_split = data_split
         self.subset_genes_col = subset_genes_col
+        self.return_feature_types = return_feature_types
         if self.subset_genes_col == "None":
             self.subset_genes_col = None
+        if subset_feature_type == "None":
+            subset_feature_type = None
 
         # load AnnData object from file if provided as path string
         if isinstance(ann_in, str):
@@ -181,7 +185,7 @@ class AnnDataEmbeddingTssDataset(Dataset):
             ), f"{self.subset_genes_col} is not a valid column in anndata.obs"
 
         # get indices matching the desired set
-        if self.data_split != "all":
+        if self.data_split != "all":            
             if self.subset_genes_col is not None:
                 use_idx = self.anndata.obs[
                     (self.anndata.obs[split_name] == self.data_split)
@@ -197,13 +201,20 @@ class AnnDataEmbeddingTssDataset(Dataset):
             else:
                 use_idx = self.anndata.obs.index
 
-        if subset_feature_types is not None:
+        if subset_feature_type is not None:
+            # gene or ataac
             assert (
-                "feature_types" in self.anndata.var_keys()
-            ), f"feature_types is not a valid column in anndata.obs"
+                "batch" in self.anndata.obs_keys()
+            ), f"batch is not a valid column in anndata.obs"
             use_idx = use_idx & self.anndata.obs[
-                    self.anndata.obs["feature_types"] == subset_feature_types
+                    self.anndata.obs["batch"] == subset_feature_type
                 ].index
+
+        if self.return_feature_types:
+            feature_types = self.anndata[use_idx, :].obs["batch"].unique()
+            # convert features into index
+            feature2id_dict = {ft: i for i, ft in enumerate(feature_types)}
+            self.feature_type_ids = [feature2id_dict[ft] for ft in self.anndata[use_idx, :].obs["batch"].values]
 
         # subset targets
         self.targets = self.anndata[use_idx, :].X.toarray()
@@ -237,6 +248,8 @@ class AnnDataEmbeddingTssDataset(Dataset):
         x = Tensor(self.inputs[idx, :])
         # y = Tensor(self.targets.chunk_X(select=[idx])[0])
         y = Tensor(self.targets[idx, :])
+        if self.return_feature_types:
+            return x, y, self.feature_type_ids[idx]
 
         return x, y
 

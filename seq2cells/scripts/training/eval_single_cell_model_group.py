@@ -42,7 +42,7 @@ from torch.utils.data import DataLoader
 
 from seq2cells.data.enformer_tss_based import AnnDataEmbeddingTssDataset
 from seq2cells.metrics_and_losses.eval_anndata import get_across_x_correlation
-from seq2cells.models.embedding2target import Embedding2Target
+from seq2cells.models.embedding2target_group import Embedding2Target
 from seq2cells.utils.predict_utils import BatchWiseWriter
 import scipy.special
 
@@ -114,6 +114,8 @@ def get_dataloader(
         data_split=config["task"]["pred_on"],
         split_name=config["data"]["split_name"],
         subset_genes_col=config["task"]["subset_genes_column"],
+        return_feature_types=True,
+        subset_feature_type=config["data"]["feature_type"],
     )
 
     if config["resource"]["pred_batch_size"] != 0:
@@ -245,6 +247,7 @@ def format_predictions(config: dict, predictions: torch.Tensor) -> np.ndarray:
             for x in os.listdir(output_path)
             if x.endswith(".pt") and x.startswith("batch_")
         ]
+
         # sort files
         pred_files = natsorted(pred_files)
         batch_files = natsorted(batch_files)
@@ -349,7 +352,7 @@ def predict(adata: ad.AnnData, config: dict) -> ad.AnnData:
 
     predictions = format_predictions(config, predictions)
 
-    adata = add_predictions_to_anndata(config, predictions, adata)
+    adata = add_predictions_to_anndata(config, predictions, adata, feature_type=config["data"]["feature_type"])
 
     # Store predictions ========================
     if config["data"]["save_predictions"]:
@@ -368,6 +371,7 @@ def add_predictions_to_anndata(
     config: dict,
     predictions: np.ndarray,
     adata: ad.AnnData,
+    feature_type=None,
 ) -> ad.AnnData:
     """Add predictions as new layer to anndata
 
@@ -388,6 +392,8 @@ def add_predictions_to_anndata(
     adata: ad.Anndata
         Same as anndata frame input with predictions added as layer.
     """
+    if feature_type == "None": feature_type = None
+
     # subset adata object if subset predictions were run
     if config["task"]["pred_on"] != "all":
         assert config["task"]["pred_on"] in ["train", "test", "valid"], (
@@ -409,6 +415,9 @@ def add_predictions_to_anndata(
     # if run on all data but subset on genes -> subset anndata frame
     if genes_subset_col is not None:
         adata = adata[adata.obs[genes_subset_col], :]
+    if feature_type is not None:
+        adata = adata[adata.obs["batch"] == feature_type]
+
     # predictions = ( (scipy.special.expit(predictions)-0.5) > 0.5) * 1 * predictions
     # add predictions as new anndata layer
     adata.layers[prediction_layer] = predictions

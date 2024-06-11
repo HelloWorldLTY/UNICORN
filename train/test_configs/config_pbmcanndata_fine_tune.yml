@@ -425,9 +425,9 @@ seed: 1234
 debug: True
 saving:
   head_dir: '/home/th748/scratch/seq2cells'
-  checkpoint_dir: 'model_checkpoints_thymus_atlas_Adabelief_mixture_2layer' #'model_checkpoints_thymus_atlas_Adabelief_largepearson' #'model_checkpoints_thymus_atlas_ct_HSC_Adabelief_mixture1024'
-  tb_log_dir: 'tensorboard_logs_thymus_atlas_hsc_2layer'
-  tb_log_prefix: "sequence_emb2cells_thymus_atlas_Adabelief_mixture_2layer" #"sequence_emb2cells_thymus_atlas_Adabelief_largepearson" #"sequence_emb2cells_thymus_atlas_ct_HSC_Adabelief_mixture1024"
+  checkpoint_dir: 'model_checkpoints_thymus_atlas_Adabelief_mixture_2layer_group' #'model_checkpoints_thymus_atlas_Adabelief_largepearson' #'model_checkpoints_thymus_atlas_ct_HSC_Adabelief_mixture1024'
+  tb_log_dir: 'tensorboard_logs_thymus_atlas_hsc_2layer_group'
+  tb_log_prefix: "sequence_emb2cells_thymus_atlas_Adabelief_mixture_2layer_group" #"sequence_emb2cells_thymus_atlas_Adabelief_largepearson" #"sequence_emb2cells_thymus_atlas_ct_HSC_Adabelief_mixture1024"
 task:
   input:
     # valid values:
@@ -460,6 +460,7 @@ resource:
 optimization:
   run_train: True
   loss: 'mixture' #'pearson' #'mixture'
+  loss_list: ['pearson_l1', 'pearson_poissonnll']
   # only relevant when using pearson loss
   rel_weights_gene: 1.0
   rel_weights_cell: 1.0
@@ -487,7 +488,8 @@ model:
   # or 'provided_bottleneck' for a bottleneck model with trunk
   model_type: 'bottleneck'
   # apply softplus after linear layer
-  softplus: True
+  softplus: False
+  softplus_list: [False, True]
   load_trained_model: False
   model_path: "."
   bottleneck_dim: 2000
@@ -511,6 +513,7 @@ data:
   loader:
     batch_size: 50
     shuffle: True
+    balance: False
   dataset:
     # ann_data_file: "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_combembeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb_standardscale.h5ad"#"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad"
     #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_combembeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb_combemb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" # "/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/ct_data/HSC_thymus_atlas_hsc_emb.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" #"/gpfs/radev/project/ying_rex/tl688/seq2cells_data/thymic_hsc/thymus_atlas_hsc_matched_with_precomp_embeddings.h5ad" 
@@ -518,6 +521,7 @@ data:
     reference_genome: "../hg38.fa"
     use_layer: None
     split_name: 'enf_set'
+    feature_types: ["gene", "ataac"]
   sequence:
     seq_context_length: 196608
     # if query files are in 0 or 1 based format

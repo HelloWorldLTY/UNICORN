@@ -449,6 +449,8 @@ task:
     # standardise observed and predicted values across TSS at validation
     std_validate: False
     use_enf_data_split: True
+    n_classes: [110]  # 1, 110
+    use_logit_pars: True
 resource:
     device: "cuda"
     # everything above 0 will invoke ddp training
@@ -460,7 +462,7 @@ resource:
 optimization:
   run_train: True
   loss: 'mixture' #'pearson' #'mixture'
-  loss_list: ['pearson_l1', 'pearson_poissonnll']
+  loss_list: ['ce']  # 'pearson_l1', 'pearson_poissonnll', 'ce'
   # only relevant when using pearson loss
   rel_weights_gene: 1.0
   rel_weights_cell: 1.0
@@ -468,7 +470,7 @@ optimization:
   epochs: 30
   dropout_prob: 0.5
   optimizer:
-    optimizer: 'Adabelief'
+    optimizer: 'Adabelief'  # Adabelief
     lr: 0.0001
     # valid: 'constant' or 'linear_warm_up_cosine_decay'
     # or 'linear_warm_up' or 'reduce_on_plateau'
@@ -521,7 +523,7 @@ data:
     reference_genome: "../hg38.fa"
     use_layer: None
     split_name: 'enf_set'
-    feature_types: ["gene", "ataac"]
+    feature_types: ["ataac"]
   sequence:
     seq_context_length: 196608
     # if query files are in 0 or 1 based format

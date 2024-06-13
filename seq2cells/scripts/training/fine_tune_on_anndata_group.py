@@ -116,6 +116,7 @@ if __name__ == "__main__":
             # f"{config['saving']['tb_log_prefix']}_"
             f"bs_{config['data']['loader']['batch_size']}_"
             f"feat_{config['data']['dataset']['feature_types']}_"
+            f"logitpars_{config['task']['target']['use_logit_pars']}_"
             f"drop_{config['optimization']['dropout_prob']}_"
             f"lr_{config['optimization']['optimizer']['lr']}_"
             f"wd_{config['optimization']['optimizer']['weight_decay']}_"
@@ -205,6 +206,8 @@ if __name__ == "__main__":
                 emb_dim=config["task"]["input"]["emb_dim"],
                 target_dim=len(train_data_list[0][0][1]),
                 n_targets=len(train_data_list),
+                n_classes=config["task"]["target"]["n_classes"],
+                use_logit_pars=config["task"]["target"]["use_logit_pars"],
                 loss_list=config["optimization"]["loss_list"],
                 learning_rate=config["optimization"]["optimizer"]["lr"],
                 lr_schedule=config["optimization"]["optimizer"]["lr_schedule"],

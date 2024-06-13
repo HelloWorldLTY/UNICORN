@@ -36,12 +36,14 @@ from torchvision.ops import sigmoid_focal_loss
 from seq2cells.metrics_and_losses.losses import (
     BalancedPearsonCorrelationLoss,
     poisson_loss,
-    criterion_neg_log_bernoulli
+    criterion_neg_log_bernoulli,
+    MultiTasksLogitPars
 )
 from seq2cells.utils.training_utils import (
     get_linear_warm_up_cosine_decay_scheduler,
 )
 from lion_pytorch import Lion
+
 
 class Embedding2Target(pl.LightningModule):
     """A single FC layer model to predict targets from embeddings."""
@@ -51,6 +53,7 @@ class Embedding2Target(pl.LightningModule):
         emb_dim: int,
         target_dim: int,
         n_targets: int,
+        n_classes: list,
         loss_list: list,
         learning_rate: float,
         lr_schedule: str,
@@ -59,6 +62,7 @@ class Embedding2Target(pl.LightningModule):
         optimizer: str,
         weight_decay: float,
         softplus_list: list,
+        use_logit_pars: bool,
         dropout_prob: Optional[float] = 0.0,
         model_trunk: Optional[torch.nn.Module] = None,
         target_is_log: Optional[bool] = False,
@@ -212,19 +216,42 @@ class Embedding2Target(pl.LightningModule):
                 nn.ReLU()
             )
             
-            # map from bottleneck to output dim
-            class_heads = nn.ModuleList(
-                [
-                    nn.Sequential(
-                        nn.Linear(self.hparams.bottleneck_dim, self.hparams.target_dim),
-                        nn.Identity() if not self.hparams.softplus_list[i] else nn.Softplus()
-                    )
-                    for i in range(self.hparams.n_targets)
-                ]
-            )
+            if self.hparams.use_logit_pars:
+                # each task share a loc linear head
+                # but have distinct log_scale linear head
+                assert len(n_classes) == self.hparams.n_targets
+
+                self.loc_head = nn.Linear(self.hparams.bottleneck_dim, self.hparams.target_dim)
+                self.log_scale_head = nn.ModuleList(
+                    [
+                        nn.Linear(self.hparams.bottleneck_dim, self.hparams.target_dim)
+                        for i in range(self.hparams.n_targets)
+                    ]
+                )
+
+                # initialize log_scale_head and loc_head with zeros
+                # nn.init.zeros_(self.loc_head.weight)
+                # nn.init.zeros_(self.loc_head.bias)
+                # for i in range(self.hparams.n_targets):
+                #     nn.init.zeros_(self.log_scale_head[i].weight)
+                #     nn.init.zeros_(self.log_scale_head[i].bias)
+
+                self.logit_pars = MultiTasksLogitPars(n_classes)  # e.g., [[1], [110]] for expression and peak prediction
+
+            else:
+                # use distinct linear layers for each target
+                class_heads = nn.ModuleList(
+                    [
+                        nn.Sequential(
+                            nn.Linear(self.hparams.bottleneck_dim, self.hparams.target_dim),
+                            nn.Identity() if not self.hparams.softplus_list[i] else nn.Softplus()
+                        )
+                        for i in range(self.hparams.n_targets)
+                    ]
+                )
+                self.class_heads = class_heads
 
         self.model_head = nn.Sequential(*modules)
-        self.class_heads = class_heads
 
         # check if optimizer supported
         assert self.hparams.optimizer in ["AdamW", "SGD", "RMSprop", "Adabelief", "Lion"], (
@@ -242,6 +269,22 @@ class Embedding2Target(pl.LightningModule):
             self.report_bar_across_celltypes = False
             self.report_bar_matrx = True
 
+    def model_forward(self, x, task_id):
+        if self.use_trunk:
+            emb = self.model_trunk(x)
+            emb = self.model_head(emb)
+        else:
+            emb = self.model_head(x)
+    
+        if self.hparams.use_logit_pars:
+            loc = self.loc_head(emb)
+            log_scale = self.log_scale_head[task_id](emb)
+            y_hat = self.logit_pars.get_logits_from_logistic_pars(loc, log_scale, task_id)
+        else:
+            y_hat = self.class_heads[task_id](emb)
+        
+        return y_hat
+
     def forward(self, inputs):
         x, y, task_ids = inputs
 
@@ -251,14 +294,10 @@ class Embedding2Target(pl.LightningModule):
             if task_mask.sum() == 0:
                 continue
 
-            x_ = x[task_mask]
-            if self.use_trunk:
-                emb = self.model_trunk(x_)
-                emb = self.model_head(emb)
-            else:
-                emb = self.model_head(x_)
-
-            y_hat[task_mask] = self.class_heads[task_id](emb)
+            res = self.model_forward(x[task_mask], task_id)
+            if res.ndim > 2:
+                res = torch.argmax(res, dim=-1).float()
+            y_hat[task_mask] = res
         return y_hat
 
     def training_step(self, batch_list, batch_idx):
@@ -273,13 +312,7 @@ class Embedding2Target(pl.LightningModule):
                 continue
             
             x, y = batch
-            if self.use_trunk:
-                emb = self.model_trunk(x)
-                emb = self.model_head(emb)
-            else:
-                emb = self.model_head(x)
-
-            y_hat = self.class_heads[i](emb)
+            y_hat = self.model_forward(x, i)
 
             if self.hparams.target_is_log and not self.hparams.log_train:
                 # transform back to exponentials
@@ -297,6 +330,11 @@ class Embedding2Target(pl.LightningModule):
                 loss = poisson_loss(y_hat, y)
             elif self.hparams.loss_list[i] == "mae":
                 loss = F.l1_loss(y_hat, y)
+            elif self.hparams.loss_list[i] == "ce":
+                weight = torch.tensor([1] + [10 for _ in range(self.hparams.n_classes[i] - 1)]).float().to(y_hat.device)
+                loss = F.cross_entropy(y_hat.view(-1, y_hat.shape[-1]), y.reshape(-1).long(), weight=weight)
+                # pick the class with the highest probability
+                y_hat = torch.argmax(y_hat, dim=-1).float()
             elif self.hparams.loss_list[i] == "poissonnll":
                 loss = F.poisson_nll_loss(y_hat, y, log_input=False)
             elif self.hparams.loss_list[i] == "pearson":
@@ -317,8 +355,8 @@ class Embedding2Target(pl.LightningModule):
             self.log(f"train_loss_{i}", loss, prog_bar=True, sync_dist=True)
 
             total_loss += loss
-            y_list.append(y)
-            y_hat_list.append(y_hat)
+            y_list.append(y.detach().cpu())  # to avoid memory leak and memory blow up
+            y_hat_list.append(y_hat.detach().cpu())  # to avoid memory leak and memory blow up
 
         total_loss /= len(batch_list)
         self.log(f"train_loss", total_loss, prog_bar=True, sync_dist=True)
@@ -391,33 +429,13 @@ class Embedding2Target(pl.LightningModule):
     def validation_step(self, batch_list, batch_idx):
         """PL validation step definition"""
         y_list, y_hat_list = [], []
+        val_loss = []
         for i, batch in enumerate(batch_list):
             if batch is None:
                 continue
 
             x, y = batch
-            if self.use_trunk:
-                emb = self.model_trunk(x)
-                emb = self.model_head(emb)
-            else:
-                emb = self.model_head(x)
-
-            y_hat = self.class_heads[i](emb)
-            y_list.append(y)
-            y_hat_list.append(y_hat)
-
-        return {"y": y_list, "y_hat": y_hat_list}
-
-    def validation_epoch_end(self, outs):
-        """PL to run validation set eval after epoch"""
-        
-        total_mean_pc_across_tss = 0.
-        total_pc_across_celltypes = 0.
-        total_val_loss = 0.
-
-        for i in range(len(outs[0]["y"])):  # iter all the tasks
-            y = torch.cat([x["y"][i] for x in outs])
-            y_hat = torch.cat([x["y_hat"][i] for x in outs])
+            y_hat = self.model_forward(x, i)
 
             if self.hparams.target_is_log and not self.hparams.log_validate:
                 # transform back to exponentials
@@ -430,30 +448,49 @@ class Embedding2Target(pl.LightningModule):
                 y_hat = torch.log(y_hat + 1)
 
             if self.hparams.loss_list[i] == "mse":
-                val_loss = F.mse_loss(y_hat, y)
+                loss = F.mse_loss(y_hat, y)
             elif self.hparams.loss_list[i] == "poisson":
-                val_loss = poisson_loss(y_hat, y)
+                loss = poisson_loss(y_hat, y)
             elif self.hparams.loss_list[i] == "mae":
-                val_loss = F.l1_loss(y_hat, y)
+                loss = F.l1_loss(y_hat, y)
+            elif self.hparams.loss_list[i] == "ce":
+                weight = torch.tensor([1] + [10 for _ in range(self.hparams.n_classes[i] - 1)]).float().to(y_hat.device)
+                loss = F.cross_entropy(y_hat.view(-1, y_hat.shape[-1]), y.reshape(-1).long(), weight=weight)
+                # pick the class with the highest probability
+                y_hat = torch.argmax(y_hat, dim=-1).float()
             elif self.hparams.loss_list[i] == "poissonnll":
-                val_loss = F.poisson_nll_loss(y_hat, y, log_input=False)
+                loss = F.poisson_nll_loss(y_hat, y, log_input=False)
             elif self.hparams.loss_list[i] == "pearson":
-                val_loss = self.pearson_loss(y_hat, y)
+                loss = self.pearson_loss(y_hat, y)
             elif self.hparams.loss_list[i] == "pearson_poissonnll":
-                l1 = self.pearson_loss(y_hat, y)
-                l2 = F.poisson_nll_loss(y_hat, y, log_input=False)
-                val_loss = l1 + l2
+                loss = self.pearson_loss(y_hat, y) + F.poisson_nll_loss(y_hat, y, log_input=False)
             elif self.hparams.loss_list[i] == "pearson_l1":
-                l1 = self.pearson_loss(y_hat, y)
-                l2 = F.smooth_l1_loss(y_hat, y)
-                val_loss = l1 + l2
+                loss = self.pearson_loss(y_hat, y) + F.smooth_l1_loss(y_hat, y)
             elif self.hparams.loss_list[i] == 'mixture':
                 l1 = self.pearson_loss(y_hat, y)
                 l2 = F.poisson_nll_loss(y_hat, y, log_input=False)
                 l3 = F.smooth_l1_loss(y_hat, y)
-                val_loss = l1 + l2 + l3
+                loss = l1 + l2 + l3
             else:
                 raise Exception("Select mse, poisson or poissonnll as loss hyperparam")
+
+            val_loss.append(loss)
+            y_list.append(y.detach().cpu())  # to avoid memory leak and memory blow up
+            y_hat_list.append(y_hat.detach().cpu())  # to avoid memory leak and memory blow up
+
+        return {"y": y_list, "y_hat": y_hat_list, "val_loss": val_loss}
+
+    def validation_epoch_end(self, outs):
+        """PL to run validation set eval after epoch"""
+
+        total_mean_pc_across_tss = 0.
+        total_pc_across_celltypes = 0.
+        total_val_loss = 0.
+
+        for i in range(len(outs[0]["y"])):  # iter all the tasks
+            y = torch.cat([x["y"][i] for x in outs])
+            y_hat = torch.cat([x["y_hat"][i] for x in outs])
+            val_loss = torch.stack([x["val_loss"][i] for x in outs]).mean()
 
             total_val_loss += val_loss
             self.log(f"val_loss_{i}", val_loss, prog_bar=True, on_epoch=True, sync_dist=True)
@@ -515,13 +552,7 @@ class Embedding2Target(pl.LightningModule):
         """PL test step definition"""
         """PL validation step definition"""
         x, y, task_id = batch
-        if self.use_trunk:
-            emb = self.model_trunk(x)
-            emb = self.model_head(emb)
-        else:
-            emb = self.model_head(x)
-
-        y_hat = self.class_heads[task_id](emb)
+        y_hat = self.model_forward(x, task_id)
         return {"y": y, "y_hat": y_hat}
 
     # def test_epoch_end(self, outs):

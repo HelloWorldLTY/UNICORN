@@ -19,6 +19,7 @@ limitations under the License.
 from typing import Literal
 
 import torch
+import torch.nn.functional as F
 
 
 def log(t, eps=1e-20):
@@ -130,3 +131,49 @@ def criterion_neg_log_bernoulli(
     bernoulli = torch.distributions.Bernoulli(probs=input)
     masked_log_probs = bernoulli.log_prob((target > 0).float())
     return -masked_log_probs.mean()
+
+
+class MultiTasksLogitPars:
+    def __init__(self, num_classes=[10]):
+        super().__init__()
+        
+        self.n_tasks = len(num_classes)
+        self.num_classes = num_classes
+
+    def log_minus_exp(self, a, b, epsilon=1.e-6):
+        return a + torch.log1p(-torch.exp(b - a) + epsilon)
+
+    def get_logits_from_logistic_pars(self, loc, log_scale, n_task=0, use_softmax=False):
+        if self.num_classes[n_task] == 1:
+            return loc
+
+        num_classes = self.num_classes[n_task]
+        loc = torch.tanh(loc).unsqueeze(-1)  # ensure loc is between [-1, 1], just like normalized data.
+        log_scale = log_scale.unsqueeze(-1)
+
+        inv_scale = (-log_scale + 2.0).exp()
+        
+        bin_width = 2.0 / (num_classes - 1)
+        bin_centers = torch.linspace(-1.0, 1.0, num_classes).to(loc.device)
+        for dim in range(loc.ndim - 1):
+            bin_centers = torch.unsqueeze(bin_centers, dim=0)
+        bin_centers = bin_centers - loc
+        
+        # equivalent implementation
+        # log_cdf_min = -1 * torch.log1p((-inv_scale * (bin_centers - 0.5 * bin_width)).exp())
+        # log_cdf_plus = -1 * torch.log1p((-inv_scale * (bin_centers + 0.5 * bin_width)).exp())
+        log_cdf_min = torch.nn.LogSigmoid()(inv_scale * (bin_centers - 0.5 * bin_width))
+        log_cdf_plus = torch.nn.LogSigmoid()(inv_scale * (bin_centers + 0.5 * bin_width))
+
+        logits = self.log_minus_exp(log_cdf_plus, log_cdf_min)  # [..., num_classes]
+        return F.softmax(logits, dim=-1) if use_softmax else logits
+
+
+if __name__ == "__main__":
+    loc = torch.randn(2, 2).clip(-1, 1)
+    log_scale = torch.randn(1, 2)
+
+    logitpars = MultiTasksLogitPars(num_classes=[2])
+    logits = logitpars.get_logits_from_logistic_pars(loc, log_scale, n_task=0, softmax=True)
+    print(logits.shape)
+    print(logits)

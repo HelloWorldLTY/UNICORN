@@ -222,19 +222,6 @@ class Embedding2Target(pl.LightningModule):
                 modules.append(nn.ReLU())
             else:
                 print("No non-linearity added!")
-                
-            modules.append(
-                nn.Linear(self.hparams.bottleneck_dim, self.hparams.bottleneck_dim)
-            )
-            
-            modules.append(
-                nn.Dropout(p=self.hparams.dropout_prob)
-            )
-            
-            modules.append(
-                nn.ReLU()
-            )
-            
 
             # map from bottleneck to output dim
             modules.append(
@@ -243,7 +230,13 @@ class Embedding2Target(pl.LightningModule):
 
         if self.hparams.softplus:
             modules.append(nn.Softplus())
+#             modules.append(nn.CELU())
+            # modules.append(nn.GLU())
+#             modules.append(nn.ReLU())
         self.model_head = nn.Sequential(*modules)
+        
+        modules_predloss = [nn.Linear(self.hparams.emb_dim, self.hparams.bottleneck_dim), nn.ReLU(), nn.Linear(self.hparams.bottleneck_dim, self.hparams.target_dim), nn.ReLU()]
+        self.losspred = nn.Sequential(*modules_predloss)
 
         # check if optimizer supported
         assert self.hparams.optimizer in ["AdamW", "SGD", "RMSprop", "Adabelief", "Lion"], (
@@ -303,12 +296,29 @@ class Embedding2Target(pl.LightningModule):
         elif self.hparams.loss == "pearson":
             loss = self.pearson_loss(y_hat, y)
         elif self.hparams.loss == 'mixture':
+#             y_hat_sp = F.sigmoid(y_hat)
+#             y_sp = (y>0)*1
+#             loss = self.pearson_loss(y_hat, y) + sigmoid_focal_loss(y_hat, y_sp.float()).mean()
+            # print(F.cross_entropy(y_hat_sp, y_sp.float()))
+#             loss = self.pearson_loss(y_hat, y) + F.binary_cross_entropy(y_hat_sp, y_sp.float())
+#             loss = criterion_neg_log_bernoulli(y_hat_sp, y_sp) + self.pearson_loss(y_hat, y)
+#             loss = self.pearson_loss(y_hat, y) + F.poisson_nll_loss(y_hat, y, log_input=False) + 0.001* F.binary_cross_entropy_with_logits(y_hat, y_sp.float())
             l1 = self.pearson_loss(y_hat, y)
             l2 = F.poisson_nll_loss(y_hat, y, log_input=False)
-            l3 = F.smooth_l1_loss(y_hat, y)
+            l3 = F.mse_loss(y_hat, y)
+# #             print(l1, l2, l3)
             loss = l1 + l2 + l3  
+#             loss = F.binary_cross_entropy(y_hat_sp, y_sp.float())
         else:
             raise Exception("Select mse, poisson or poissonnll as loss hyperparam")
+        loss_red = F.mse_loss(y_hat, y, reduction='none')
+#         loss_red = loss_red.view(-1,1)
+        loss_pred = self.losspred(x)
+#         print(loss_red.shape)
+#         print(loss_pred.shape)
+#         print(F.mse_loss(loss_pred, loss_red))
+#         print(loss)
+        loss = loss + 1*F.mse_loss(loss_pred, loss_red) # loss prediction
 
         # Logging to TensorBoard by default
         self.log("train_loss", loss, prog_bar=True, sync_dist=True)
@@ -324,7 +334,7 @@ class Embedding2Target(pl.LightningModule):
         else:
             y_hat = self.model_head(x)
 
-        return {"y": y, "y_hat": y_hat}
+        return {"y": y, "y_hat": y_hat, "x":x}
 
     def training_epoch_end(self, outs):
         """PL to run training set eval after epoch"""
@@ -414,10 +424,25 @@ class Embedding2Target(pl.LightningModule):
         elif self.hparams.loss == "mae":
             val_loss = F.l1_loss(y_hat, y)
         elif self.hparams.loss == 'mixture':
-            val_loss = self.pearson_loss(y_hat, y) + F.poisson_nll_loss(y_hat, y, log_input=False) + F.smooth_l1_loss(y_hat, y)
+#             y_hat_sp = F.sigmoid(y_hat)
+#             y_sp = (y>0)*1
+#             val_loss = self.pearson_loss(y_hat, y) + sigmoid_focal_loss(y_hat, y_sp.float()).mean()
+            # print(F.cross_entropy(y_hat_sp, y_sp.float()))
+#             val_loss = self.pearson_loss(y_hat, y) + F.cross_entropy(y_hat_sp, y_sp.float())
+#             val_loss = criterion_neg_log_bernoulli(y_hat_sp, y_sp) + self.pearson_loss(y_hat_sp, y)
+#             val_loss = self.pearson_loss(y_hat, y) + F.poisson_nll_loss(y_hat, y, log_input=False) + F.l1_loss(y_hat, y) + F.binary_cross_entropy_with_logits(y_hat, y_sp.float())
+            val_loss = self.pearson_loss(y_hat, y) + F.mse_loss(y_hat, y) + F.poisson_nll_loss(y_hat, y, log_input=False) 
+#             val_loss = F.cross_entropy(y_hat_sp, y_sp.float())
         else:
             raise Exception("Select mse, poisson or poissonnll as loss hyperparam")
 
+        loss_red = F.mse_loss(y_hat, y, reduction='none')
+#         print(loss_red)
+#         loss_red = loss_red.view(-1,1)
+        x = torch.cat([outs[i]["x"] for i in range(len(outs))])
+        loss_pred = self.losspred(x)
+        
+        val_loss = val_loss + 1*F.mse_loss(loss_pred, loss_red) # loss prediction
         self.log("val_loss", val_loss, prog_bar=True, on_epoch=True, sync_dist=True)
 
         if self.hparams.std_validate:

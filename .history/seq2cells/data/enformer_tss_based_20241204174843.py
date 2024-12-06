@@ -108,8 +108,8 @@ class EnformerTssDataset(Dataset):
         y = Tensor(self.targets[idx, :])
 
         return x, y
-    
-# update to accelerate
+
+
 @dataclass
 class AnnDataEmbeddingTssDataset(Dataset):
     """AnnData Embedding based TSS dataset.
@@ -197,11 +197,13 @@ class AnnDataEmbeddingTssDataset(Dataset):
                 use_idx = self.anndata.obs.index
 
         # subset targets
-        self.targets = self.anndata[use_idx, :].X.toarray()
+        self.targets = self.anndata[use_idx, :]
         # init inputs from embeddings embedding - subset to set of interest
         self.inputs = self.anndata[use_idx, :].obsm["seq_embedding"]
-        if type(self.inputs) != ad._core.views.ArrayView:
-            self.inputs = self.inputs.values
+        print(type(self.inputs))
+        if type(self.inputs) == ad._core.views.ArrayView:
+            self.inputs = pd.DataFrame(self.inputs)
+            self.inputs.index = list(self.targets.obs_names)
 
     def __len__(self):
         """Get length of the dataset"""
@@ -223,12 +225,11 @@ class AnnDataEmbeddingTssDataset(Dataset):
         y: torch.Tensor
             A torch tensor of length [num_cells].
         """
-        # x = Tensor(self.inputs.iloc[idx, :].values)
-        x = Tensor(self.inputs[idx, :])
-        # y = Tensor(self.targets.chunk_X(select=[idx])[0])
-        y = Tensor(self.targets[idx, :])
+        x = Tensor(self.inputs.iloc[idx, :].values)
+        y = Tensor(self.targets.chunk_X(select=[idx])[0])
 
         return x, y
+
 
 @dataclass
 class GenomeInterval2EnformerTargetDataset(Dataset):

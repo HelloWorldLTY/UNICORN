@@ -109,7 +109,7 @@ class EnformerTssDataset(Dataset):
 
         return x, y
     
-# update to accelerate
+
 @dataclass
 class AnnDataEmbeddingTssDataset(Dataset):
     """AnnData Embedding based TSS dataset.

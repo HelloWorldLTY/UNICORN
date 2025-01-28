@@ -42,3 +42,10 @@ To use GTEx data, please visit [this website](https://gtexportal.org/home/eqtlDa
 We thank the authors of seq2cells, bcftools, and samtools for their great codes.
 
 # Citation
+```
+@article{zhao2025unicorn,
+  title={UNICORN: Towards Universal Cellular Expression Prediction with an Explainable Multi-Task Learning Framework},
+  author={Zhao, Hongyu and Liu, Tianyu and Huang, Tinglin and Lin, Yingxin and Ying, Rex},
+  year={2025}
+}
+```

@@ -43,10 +43,14 @@ We thank the authors of seq2cells, bcftools, and samtools for their great codes.
 
 # Citation
 ```
-@article{zhao2025unicorn,
-  title={UNICORN: Towards Universal Cellular Expression Prediction with an Explainable Multi-Task Learning Framework},
-  author={Liu, Tianyu and Huang, Tinglin and Wang, Lijun and Lin, Yingxin and Ying, Rex and Hongyu, Zhao},
-  journal = {Nature Communications},
-  year={2025}
+@article{liu2025unicorn,
+  title={UNICORN: Towards universal cellular expression prediction with a multi-task learning framework},
+  author={Liu, Tianyu and Huang, Tinglin and Wang, Lijun and Lin, Yingxin and Ying, Rex and Zhao, Hongyu},
+  journal={Nature Communications},
+  volume={16},
+  number={1},
+  pages={9455},
+  year={2025},
+  publisher={Nature Publishing Group UK London}
 }
 ```
